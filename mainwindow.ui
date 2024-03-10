@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="windowTitle">
+   <string>Chatbot By Gemma</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QProgressBar" name="progress"/>
+    </item>
+    <item>
+     <widget class="QWebEngineView" name="webView"/>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLineEdit" name="prompt"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="send">
+        <property name="text">
+         <string>Send</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="load">
+        <property name="text">
+         <string>Load</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="reset">
+        <property name="text">
+         <string>Reset</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionSaveAs"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <widget class="QMenu" name="menu_Setting">
+    <property name="title">
+     <string>&amp;Setting</string>
+    </property>
+    <addaction name="actionLoadT"/>
+    <addaction name="actionLoadW"/>
+   </widget>
+   <addaction name="menu_Setting"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar">
+    <action name="actionLoadT">
+     <property name="text">
+      <string>Load &amp;Tokenizer</string>
+     </property>
+    </action>
+    <action name="actionLoadW">
+     <property name="text">
+      <string>Load Compressed &amp;Weights</string>
+     </property>
+    </action>
+    <action name="actionSaveAs">
+     <property name="text">
+      <string>&amp;Save As ...</string>
+     </property>
+    </action>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

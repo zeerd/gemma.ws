@@ -1,0 +1,9 @@
+moc_*
+*.o
+ui_mainwindow.h
+qrc_gemma.cpp
+.qmake.stash
+Makefile
+gemma
+2b-it.sbs
+tokenizer.spm
