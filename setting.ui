@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+  <class>Setting</class>
+  <widget class="QDialog" name="Setting">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>620</width>
+      <height>150</height>
+     </rect>
+    </property>
+    <property name="windowTitle">
+      <string>Setting</string>
+    </property>
+    <widget class="QWidget" name="centralWidget">
+      <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+              <widget class="QLabel" name="label_Weights">
+                <property name="text">
+                  <string>Weights File</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_Weights">
+               <property name="minimumWidth">
+                <number>400</number>
+               </property>
+               <property name="maximumWidth">
+                <number>400</number>
+               </property>
+             </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="load_Weights">
+                <property name="text">
+                  <string>Load Weights</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </item>
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout2">
+            <item>
+              <widget class="QLabel" name="label_Tokenizer">
+                <property name="text">
+                  <string>Tokenizer File</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_Tokenizer">
+               <property name="minimumWidth">
+                <number>400</number>
+               </property>
+               <property name="maximumWidth">
+                <number>400</number>
+               </property>
+             </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="load_Tokenizer">
+                <property name="text">
+                  <string>Load Tokenizer</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </item>
+      </layout>
+    </widget>
+  </widget>
+  <resources/>
+  <connections/>
+</ui>

@@ -5,12 +5,15 @@ QT += webchannel
 
 HEADERS += \
     mainwindow.h \
-    document.h
+    gemmathread.h \
+    document.h \
+    setting.h
 
 SOURCES = \
     main.cpp \
     mainwindow.cpp \
-    gemmamain.cpp
+    gemmathread.cpp \
+    setting.cpp
 
 RESOURCES = \
     resources/gemma.qrc
@@ -25,14 +28,14 @@ INCLUDEPATH += gemma.cpp/
 INCLUDEPATH += gemma.cpp/build/_deps/highway-src
 INCLUDEPATH += gemma.cpp/build/_deps/sentencepiece-src/
 
-LIBS+=-Lgemma.cpp/build/
-LIBS+=-Lgemma.cpp/build/_deps/highway-build
-LIBS+=-lgemma -lhwy -lhwy_contrib
-
-LIBS+=gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
+LIBS += -Lgemma.cpp/build/
+LIBS += -Lgemma.cpp/build/_deps/highway-build
+LIBS += -lgemma -lhwy -lhwy_contrib
+LIBS += gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    setting.ui
 
 DISTFILES += \
     resources/3rdparty/MARKDOWN-LICENSE.txt \

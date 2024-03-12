@@ -53,27 +53,33 @@
    <addaction name="menu_File"/>
    <widget class="QMenu" name="menu_Setting">
     <property name="title">
-     <string>&amp;Setting</string>
+     <string>&amp;Edit</string>
     </property>
-    <addaction name="actionLoadT"/>
-    <addaction name="actionLoadW"/>
+    <addaction name="actionSetting"/>
    </widget>
    <addaction name="menu_Setting"/>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
+   <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusBar">
-    <action name="actionLoadT">
+    <action name="actionSetting">
      <property name="text">
-      <string>Load &amp;Tokenizer</string>
-     </property>
-    </action>
-    <action name="actionLoadW">
-     <property name="text">
-      <string>Load Compressed &amp;Weights</string>
+      <string>&amp;Setting</string>
      </property>
     </action>
     <action name="actionSaveAs">
      <property name="text">
       <string>&amp;Save As ...</string>
+     </property>
+    </action>
+    <action name="actionAbout">
+     <property name="text">
+      <string>&amp;About</string>
      </property>
     </action>
   </widget>

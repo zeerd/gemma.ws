@@ -1,6 +1,6 @@
 moc_*
 *.o
-ui_mainwindow.h
+ui_*.h
 qrc_gemma.cpp
 .qmake.stash
 Makefile

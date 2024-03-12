@@ -1,7 +1,7 @@
 # Plugins are available for the following editors and IDE: Atom, Eclipse, Emacs, Notepad++, SublimeText, Vim, VisualStudio, Xcode
 # (see http://editorconfig.org/)
 
-[{CMakeLists.txt,*.cmake,Kconfig,*.pro}]
+[*.pro]
 indent_style = space
 indent_size = 4
 end_of_line = lf
@@ -15,10 +15,18 @@ end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{c,cpp,h,hpp}]
+[*.{c,cpp,cc,h,hpp}]
 charset = utf-8
 indent_style = space
 indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.ui]
+charset = utf-8
+indent_style = space
+indent_size = 2
 end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
