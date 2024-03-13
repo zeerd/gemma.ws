@@ -1,3 +1,18 @@
+# Gemma.QT
+
+Gemma with QT UI Framework.
+
+## Functions
+
+1. Local Chatbot Using Gemma-2B.
+
+2. Parse a whole plaintext file/source-code for summary(slow).
+
+3. Parse C/C++ source file function by function for speed up.
+
+4. Save the conversation as a Markdown file.
+
+## Build
 
 1. Install packages
 
@@ -20,11 +35,11 @@ git submodule update
 
 cd gemma.cpp/build
 cmake .. -DWEIGHT_TYPE=hwy::bfloat16_t -DBUILD_TESTING=OFF -DSPM_ENABLE_SHARED=OFF
-make -j4 libgemma
+make -j libgemma
 cd -
 
 qmake
-make
+make -j
 ```
 
 3. Run

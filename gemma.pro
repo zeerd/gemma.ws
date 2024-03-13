@@ -7,13 +7,15 @@ HEADERS += \
     mainwindow.h \
     gemmathread.h \
     document.h \
-    setting.h
+    setting.h \
+    parsefile.h
 
 SOURCES = \
     main.cpp \
     mainwindow.cpp \
     gemmathread.cpp \
-    setting.cpp
+    setting.cpp \
+    parsefile.cpp
 
 RESOURCES = \
     resources/gemma.qrc
@@ -21,9 +23,10 @@ RESOURCES = \
 # Disable Qt Quick compiler because the example doesn't use QML, but more importantly so that
 # the source code of the .js files is not removed from the embedded qrc file.
 CONFIG -= qtquickcompiler
-CONFIG += c++17
 
-INCLUDEPATH += /usr/local/Qt-5.15.6/include/QtWidgets/
+CONFIG += c++17
+# CONFIG += debug
+
 INCLUDEPATH += gemma.cpp/
 INCLUDEPATH += gemma.cpp/build/_deps/highway-src
 INCLUDEPATH += gemma.cpp/build/_deps/sentencepiece-src/
@@ -35,12 +38,9 @@ LIBS += gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
 
 FORMS += \
     mainwindow.ui \
-    setting.ui
+    setting.ui \
+    parsefile.ui
 
 DISTFILES += \
     resources/3rdparty/MARKDOWN-LICENSE.txt \
     resources/3rdparty/MARKED-LICENSE.txt
-
-# install
-# target.path = $$[QT_INSTALL_EXAMPLES]/webenginewidgets/gemma
-# INSTALLS += target

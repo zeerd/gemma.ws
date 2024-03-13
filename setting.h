@@ -25,8 +25,11 @@ public:
     ~Setting();
 
 private slots:
+    void on_button_OK_clicked();
+    void on_button_Cancel_clicked();
     void on_load_Weights_clicked();
     void on_load_Tokenizer_clicked();
+    void onCurrentTextChanged(const QString &text);
 
 private:
     MainWindow *m_mainWindow;

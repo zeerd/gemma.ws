@@ -3,7 +3,7 @@
 #include "ui_mainwindow.h"
 
 #include "setting.h"
-#include "ui_setting.h"
+#include "parsefile.h"
 
 #include <filesystem>
 
@@ -12,6 +12,7 @@
 #include <QShortcut>
 #include <QSettings>
 #include <QStyle>
+#include <QTimer>
 
 GemmaThread* MainWindow::m_gemma = NULL;
 
@@ -49,6 +50,9 @@ MainWindow::MainWindow(QWidget *parent) :
         m_gemma->m_fileTokenizer = "";
         welcome += "- Tokenizer file missing.\n";
     }
+    if(m_gemma->m_model_type.length() == 0) {
+        welcome += "- Model type not set.\n";
+    }
     welcome += "\n";
 
     m_content.setText(welcome);
@@ -57,13 +61,18 @@ MainWindow::MainWindow(QWidget *parent) :
     page->setWebChannel(m_channel);
 
     connect(ui->actionSetting, &QAction::triggered, this, &MainWindow::onSetting);
+    connect(ui->actionParseFile, &QAction::triggered, this, &MainWindow::onParseFile);
     connect(ui->actionSaveAs, &QAction::triggered, this, &MainWindow::onSaveAs);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onAbout);
 
     QShortcut *shortcut = new QShortcut(Qt::Key_Return, this);
     connect(shortcut, &QShortcut::activated, this, &MainWindow::on_send_clicked);
 
-    m_gemma->gemmaInit();
+    QTimer *timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &MainWindow::onTimerSave);
+    timer->start(10000);
+
+    m_gemma->start();
 }
 
 MainWindow::~MainWindow()
@@ -80,6 +89,7 @@ void MainWindow::saveConfig()
     settings.beginGroup("Setting");
     settings.setValue("Weight", m_gemma->m_fileWeight);
     settings.setValue("Tokenizer", m_gemma->m_fileTokenizer);
+    settings.setValue("ModelType", m_gemma->m_model_type);
     settings.endGroup();
 }
 
@@ -89,6 +99,7 @@ void MainWindow::readConfig()
     settings.beginGroup("Setting");
     m_gemma->m_fileWeight = settings.value("Weight").toString();
     m_gemma->m_fileTokenizer = settings.value("Tokenizer").toString();
+    m_gemma->m_model_type = settings.value("ModelType", "2b-it").toString();
     settings.endGroup();
 }
 
@@ -111,9 +122,28 @@ bool MainWindow::loadFile(const QString &path)
 
 void MainWindow::onSetting()
 {
-    Setting s(this);
-    s.exec();
-    m_gemma->gemmaInit();
+    Setting dlg(this);
+    if(dlg.exec() == QDialog::Accepted) {
+        saveConfig();
+    }
+}
+
+void MainWindow::onParseFile()
+{
+    if(m_gemma->m_model == NULL) {
+        QMessageBox::warning(this, windowTitle(), "Model had not loaded.");
+    }
+    else if(m_gemma->isRunning()) {
+        QMessageBox::warning(this, windowTitle(), "You need to stop the current work first.");
+    }
+    else {
+        ParseFile dlg(this);
+        if(dlg.exec() == QDialog::Accepted) {
+            if(dlg.parse()) {
+                startThread();
+            }
+        }
+    }
 }
 
 void MainWindow::onSaveAs()
@@ -138,6 +168,19 @@ void MainWindow::onSaveAs()
                   "Could not save to file" + QDir::toNativeSeparators(path)
                 + " : " + f.errorString() + "\n\n");
         }
+    }
+}
+
+void MainWindow::onTimerSave()
+{
+    QDir dir;
+    QString path = dir.homePath() + "/.Gemma.QT/";
+    dir.mkdir(path);
+
+    QFile f(path + "tmp.md");
+    if (f.open(QIODevice::WriteOnly)) {
+        f.write(m_content.text().toUtf8());
+        f.close();
     }
 }
 
@@ -172,8 +215,22 @@ void MainWindow::onAbout()
 
 void MainWindow::on_doGemma(QString text)
 {
-    text.replace("\n", "\n\n");
-    m_content.appendText(text);
+    static int wait_for_spec = 0;
+    if(text == "<end_of_turn>" && wait_for_spec == 0) {
+        wait_for_spec++;
+    }
+    else if(wait_for_spec > 0) {
+        if(text == "<start_of_turn>" && wait_for_spec == 1) {
+            wait_for_spec++;
+        }
+        if(text == "model" && wait_for_spec == 2) {
+            wait_for_spec = 0;
+        }
+    }
+    else {
+        text.replace("\n", "\n\n");
+        m_content.appendText(text);
+    }
 }
 
 void MainWindow::on_doGemmaFinished()
@@ -181,66 +238,26 @@ void MainWindow::on_doGemmaFinished()
     m_content.appendText("\n\n---\n");
     ui->progress->setValue(0);
     ui->send->setText(QCoreApplication::translate("MainWindow", "Send", nullptr));
-    ui->load->setText(QCoreApplication::translate("MainWindow", "Load", nullptr));
 }
 
 void MainWindow::startThread()
 {
     m_gemma->m_break = false;
     ui->send->setText(QCoreApplication::translate("MainWindow", "Stop", nullptr));
-    ui->load->setText(QCoreApplication::translate("MainWindow", "Stop", nullptr));
+    ui->progress->setValue(1);
     m_gemma->start();
 }
 
 void MainWindow::on_send_clicked()
 {
-    if(m_gemma->m_model == NULL) {
-        QMessageBox::warning(this, windowTitle(), "Model had not loaded.");
-    }
-    else if(m_gemma->isRunning()) {
+    if(m_gemma->isRunning()) {
         m_gemma->m_break = true;
     }
     else {
-        QString text = ui->prompt->text();
-        if(text != "") {
-            m_content.appendText("\n\n**" + text + "**\n\n");
-        }
+        m_gemma->setPrompt(ui->prompt->text().toStdString());
         startThread();
 
         ui->prompt->selectAll();
-    }
-}
-
-void MainWindow::on_load_clicked()
-{
-    if(m_gemma->m_model == NULL) {
-        QMessageBox::warning(this, windowTitle(), "Model had not loaded.");
-    }
-    else if(m_gemma->isRunning()) {
-        m_gemma->m_break = true;
-    }
-    else {
-        QString path = QFileDialog::getOpenFileName(this,
-            tr("Open PlainText File"), "", tr("PlainText File (*.*)"));
-        if (!path.isEmpty()) {
-            QFile f(path);
-            if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                QByteArray lines = f.readAll();
-                lines.replace('\n', ' ');
-
-                m_content.appendText(
-                     "\n\nSummarize Content of " + path + " : " + "\n\n");
-
-                std::string pre = "What does this texts do ";
-                m_gemma->setPrompt(pre + lines.toStdString());
-                startThread();
-            }
-            else {
-                QMessageBox::warning(this, windowTitle(),
-                                tr("Could not open file %1: %2").arg(
-                                QDir::toNativeSeparators(path), f.errorString()));
-            }
-        }
     }
 }
 

@@ -26,13 +26,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="load">
-        <property name="text">
-         <string>Load</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="reset">
         <property name="text">
          <string>Reset</string>
@@ -58,6 +51,13 @@
     <addaction name="actionSetting"/>
    </widget>
    <addaction name="menu_Setting"/>
+   <widget class="QMenu" name="menu_Functions">
+    <property name="title">
+     <string>Fun&amp;ctions</string>
+    </property>
+    <addaction name="actionParseFile"/>
+   </widget>
+   <addaction name="menu_Functions"/>
    <widget class="QMenu" name="menu_Help">
     <property name="title">
      <string>&amp;Help</string>
@@ -67,6 +67,11 @@
    <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusBar">
+    <action name="actionParseFile">
+     <property name="text">
+      <string>Parse &amp;File</string>
+     </property>
+    </action>
     <action name="actionSetting">
      <property name="text">
       <string>&amp;Setting</string>

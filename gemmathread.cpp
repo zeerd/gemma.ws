@@ -8,39 +8,56 @@
 
 GemmaThread::GemmaThread(QObject *parent)
         : m_break(false)
+        , m_model_type("2b-it")
         , m_model(NULL)
         , m_mainWindow((MainWindow*)parent)
-        , m_prompt("")
         , m_running(false)
 {
+    m_num_threads = static_cast<size_t>(std::clamp(
+            static_cast<int>(std::thread::hardware_concurrency()) - 2, 1, 18));
 }
 
-void GemmaThread::setPrompt(std::string prompt) { m_prompt = prompt; }
+GemmaThread::~GemmaThread()
+{
+    delete m_model;
+    delete m_pool;
+}
+
+void GemmaThread::setPrompt(std::string prompt)
+{
+    m_prompts.push(std::pair<std::string, std::string>("", prompt));
+}
+
+void GemmaThread::appendPrompt(std::string sf, std::string prompt)
+{
+    m_prompts.push(std::pair<std::string, std::string>(sf, prompt));
+}
 
 void GemmaThread::gemmaInit()
 {
     if(QFile::exists(m_fileWeight) && QFile::exists(m_fileTokenizer)
-    && (m_model == NULL)) {
+    && (m_model_type != "") && (m_model == NULL)) {
+        QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
+                            "setRange", Q_ARG(int, 0), Q_ARG(int, 0));
+
         gcpp::LoaderArgs loader(0, NULL);
-        m_inference = new gcpp::InferenceArgs(0, NULL);
-        gcpp::AppArgs app(0, NULL);
 
         loader.tokenizer = m_fileTokenizer.toStdString().c_str();
-        loader.model_type = "2b-it";
-        loader.cache = m_fileWeight.toStdString().c_str();
+        loader.model_type = m_model_type.toStdString();
+        loader.compressed_weights = m_fileWeight.toStdString().c_str();
 
-        m_mainWindow->saveConfig();
-
-        m_inner_pool = new hwy::ThreadPool(0);
-        m_pool = new hwy::ThreadPool(app.num_threads);
-        gcpp::PinThreadToCore(app.num_threads - 1);  // Main thread
+        m_pool = new hwy::ThreadPool(m_num_threads);
+        gcpp::PinThreadToCore(m_num_threads - 1);  // Main thread
 
         m_pool->Run(0, m_pool->NumThreads(),
                  [](uint64_t /*task*/, size_t thread) { gcpp::PinThreadToCore(thread); });
 
+        m_kv_cache = CreateKVCache(loader.ModelType());
+
         m_abs_pos = 0;
         m_current_pos = 0;
-        m_model = new gcpp::Gemma(loader, *m_pool);
+        m_model = new gcpp::Gemma(loader.tokenizer, loader.compressed_weights,
+                                  loader.ModelType(), *m_pool);
 
         const char* instructions = "\n"
             "**Usage**\n\n"
@@ -50,19 +67,21 @@ void GemmaThread::gemmaInit()
             "- What are some historical attractions to visit around "
             "Massachusetts?\n"
             "- Compute the nth fibonacci number in javascript.\n"
-            "- Write a standup comedy bit about GPU programming.\n";
-        m_mainWindow->m_content.appendText(instructions);
-        m_mainWindow->m_content.appendText("\n\n---\n");
+            "- Write a standup comedy bit about GPU programming.\n"
+            "\n\n---\n";
+        QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemma",
+                    Q_ARG(QString, instructions));
+        QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
+                            "setRange", Q_ARG(int, 0), Q_ARG(int, 1));
     }
 }
 
 void GemmaThread::gemmaUninit()
 {
     if(m_model != NULL) {
-        delete m_pool;
-        delete m_inner_pool;
-        delete m_inference;
-        delete m_model;
+        if(isRunning()) {
+            terminate();
+        }
     }
 }
 
@@ -70,74 +89,96 @@ void GemmaThread::run()
 {
     m_break = false;
 
+    gemmaInit();
+
     int prompt_size{};
-    m_current_pos = 0;
 
     std::mt19937 gen;
     std::random_device rd;
     gen.seed(rd());
 
-    if (m_prompt.length() == 0) {
-        m_prompt = m_mainWindow->ui->prompt->text().toStdString();
-    }
-    auto stream_token = [this, &gen, &prompt_size,
-                         tokenizer = &m_model->Tokenizer()
-                         ](int token, float) {
-        ++(this->m_abs_pos);
-        ++(this->m_current_pos);
+    std::string prompt_text = "";
+    while (!m_prompts.empty()) {
+        std::pair<std::string, std::string> prompt_pair = m_prompts.front();
+        prompt_text  = prompt_pair.second;
+        m_prompts.pop();
 
-        if (this->m_current_pos < prompt_size) {
-            QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
-                "setValue", Q_ARG(int, 1 + this->m_current_pos));
-        }
-        else if (token == gcpp::EOS_ID) {
-            // GenerateGemma() may be finished by many reasons.
-            // EOS is only one of them.
+        QString markdown_prompt = QString("\n\n**");
+        if(prompt_pair.first.length() > 0) {
+            markdown_prompt += QString(prompt_pair.first.c_str());
         }
         else {
-            std::string token_text;
-            HWY_ASSERT(tokenizer->Decode(std::vector<int>{token}, &token_text).ok());
-            // +1 since position is incremented above
-            if (this->m_current_pos == prompt_size + 1) {
-              // first token of response
-              token_text.erase(0, token_text.find_first_not_of(" \t\n"));
+            markdown_prompt += QString(prompt_text.c_str());
+        }
+        markdown_prompt += "**\n\n";
+        QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemma",
+                    Q_ARG(QString, markdown_prompt));
+        QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
+                    "setValue", Q_ARG(int, 1));
+
+        m_current_pos = 0;
+        auto stream_token = [this, &gen, &prompt_size,
+                             tokenizer = m_model->Tokenizer()
+                             ](int token, float) {
+            ++(this->m_abs_pos);
+            ++(this->m_current_pos);
+
+            if (this->m_current_pos < prompt_size) {
+                QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
+                    "setValue", Q_ARG(int, 1 + this->m_current_pos));
             }
-            QMetaObject::invokeMethod(this->m_mainWindow,
-                        "on_doGemma", Q_ARG(QString, token_text.c_str()));
+            else if (token == gcpp::EOS_ID) {
+                // GenerateGemma() may be finished by many reasons.
+                // EOS is only one of them.
+            }
+            else {
+                std::string token_text;
+                HWY_ASSERT(tokenizer->Decode(std::vector<int>{token}, &token_text).ok());
+                // +1 since position is incremented above
+                if (this->m_current_pos == prompt_size + 1) {
+                  // first token of response
+                  token_text.erase(0, token_text.find_first_not_of(" \t\n"));
+                }
+                QMetaObject::invokeMethod(this->m_mainWindow,
+                            "on_doGemma", Q_ARG(QString, token_text.c_str()));
+            }
+            return !m_break;
+        };
+
+        std::vector<int> prompt;
+        if (m_model->model_training == gcpp::ModelTraining::GEMMA_IT) {
+            // For instruction-tuned models: add control tokens.
+            prompt_text = "<start_of_turn>user\n" + prompt_text +
+                          "<end_of_turn>\n<start_of_turn>model\n";
+            if (m_abs_pos > 0) {
+                // Prepend "<end_of_turn>" token if this is a multi-turn dialogue
+                // continuation.
+                prompt_text = "<end_of_turn>\n" + prompt_text;
+            }
         }
-        return !m_break;
-    };
 
-    std::vector<int> prompt;
-    if (m_model->model_training == gcpp::ModelTraining::GEMMA_IT) {
-        // For instruction-tuned models: add control tokens.
-        m_prompt = "<start_of_turn>user\n" + m_prompt +
-                      "<end_of_turn>\n<start_of_turn>model\n";
-        if (m_abs_pos > 0) {
-            // Prepend "<end_of_turn>" token if this is a multi-turn dialogue
-            // continuation.
-            m_prompt = "<end_of_turn>\n" + m_prompt;
+        qDebug() << tr(prompt_text.c_str());
+        HWY_ASSERT(m_model->Tokenizer()->Encode(prompt_text, &prompt).ok());
+
+        // For both pre-trained and instruction-tuned models: prepend "<bos>" token
+        // if needed.
+        if (m_abs_pos == 0) {
+            prompt.insert(prompt.begin(), 2);
         }
+
+        prompt_size = prompt.size();
+        QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
+                            "setRange", Q_ARG(int, 0), Q_ARG(int, prompt_size));
+
+        gcpp::GenerateGemma(
+                    *m_model,
+                    {.max_tokens = 2048,
+                     .max_generated_tokens = 1024,
+                     .temperature = 1.0,
+                     .verbosity = 2},
+                    prompt, /*KV cache position = */ m_abs_pos, m_kv_cache, *m_pool,
+                    stream_token, gen);
     }
-
-    HWY_ASSERT(m_model->Tokenizer().Encode(m_prompt, &prompt).ok());
-
-    // For both pre-trained and instruction-tuned models: prepend "<bos>" token
-    // if needed.
-    if (m_abs_pos == 0) {
-        prompt.insert(prompt.begin(), 2);
-    }
-
-    prompt_size = prompt.size();
-    QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
-                        "setRange", Q_ARG(int, 0), Q_ARG(int, prompt_size));
-
-    gcpp::GenerateGemma(*m_model, *m_inference,
-        prompt, m_abs_pos,
-        *m_pool, *m_inner_pool, stream_token,
-                  /*accept_token=*/[](int) { return true; }, gen, 2);
-
-    m_prompt = "";
 
     if(m_break) {
         QMetaObject::invokeMethod(this->m_mainWindow,

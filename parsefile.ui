@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
-  <class>Setting</class>
-  <widget class="QDialog" name="Setting">
+  <class>ParseFile</class>
+  <widget class="QDialog" name="ParseFile">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -11,16 +11,16 @@
      </rect>
     </property>
     <property name="windowTitle">
-      <string>Setting</string>
+      <string>Parse File</string>
     </property>
     <widget class="QWidget" name="centralWidget">
       <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
+          <layout class="QHBoxLayout" name="horizontalLayout2">
             <item>
-              <widget class="QLabel" name="label_Weights">
+              <widget class="QLabel" name="label_FolderFile">
                 <property name="text">
-                  <string>Weights File</string>
+                  <string>Folder/File</string>
                 </property>
                 <property name="minimumWidth">
                  <number>100</number>
@@ -31,29 +31,19 @@
               </widget>
             </item>
             <item>
-              <widget class="QLineEdit" name="edit_Weights">
+              <widget class="QLineEdit" name="edit_FolderFile">
                <property name="minimumWidth">
-                <number>300</number>
+                <number>400</number>
                </property>
                <property name="maximumWidth">
-                <number>300</number>
+                <number>400</number>
                </property>
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="comboBox">
-               <property name="minimumWidth">
-                <number>100</number>
-               </property>
-               <property name="maximumWidth">
-                <number>100</number>
-               </property>
-             </widget>
-            </item>
-            <item>
-              <widget class="QPushButton" name="load_Weights">
+              <widget class="QPushButton" name="button_Browse">
                 <property name="text">
-                  <string>Load Weights</string>
+                  <string>Browse</string>
                 </property>
                 <property name="minimumWidth">
                  <number>100</number>
@@ -66,11 +56,11 @@
           </layout>
         </item>
         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
+          <layout class="QHBoxLayout" name="horizontalLayout2">
             <item>
-              <widget class="QLabel" name="label_Tokenizer">
+              <widget class="QLabel" name="label_ctags">
                 <property name="text">
-                  <string>Tokenizer File</string>
+                  <string>ctags binary</string>
                 </property>
                 <property name="minimumWidth">
                  <number>100</number>
@@ -81,7 +71,7 @@
               </widget>
             </item>
             <item>
-              <widget class="QLineEdit" name="edit_Tokenizer">
+              <widget class="QLineEdit" name="edit_ctags">
                <property name="minimumWidth">
                 <number>400</number>
                </property>
@@ -91,9 +81,9 @@
              </widget>
             </item>
             <item>
-              <widget class="QPushButton" name="load_Tokenizer">
+              <widget class="QPushButton" name="button_BrowseCtags">
                 <property name="text">
-                  <string>Load Tokenizer</string>
+                  <string>Browse</string>
                 </property>
                 <property name="minimumWidth">
                  <number>100</number>
@@ -105,8 +95,54 @@
             </item>
           </layout>
         </item>
+
         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
+          <widget class="QFrame" name="split_line1">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>620</width>
+              <height>1</height>
+             </rect>
+            </property>
+          </widget>
+        </item>
+
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout2">
+            <item>
+             <widget class="QRadioButton" name="radioFile">
+              <property name="text">
+               <string>Parse Whole File</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioFunction">
+              <property name="text">
+               <string>Parse Function By Function(Use ctags)</string>
+              </property>
+             </widget>
+            </item>
+          </layout>
+        </item>
+
+        <item>
+          <widget class="QFrame" name="split_line2">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>620</width>
+              <height>1</height>
+             </rect>
+            </property>
+          </widget>
+        </item>
+
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout2">
             <item>
               <widget class="QPushButton" name="button_OK">
                 <property name="text">

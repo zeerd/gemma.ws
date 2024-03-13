@@ -17,11 +17,38 @@ Setting::Setting(QWidget *parent)
 
     ui->edit_Weights->setText(m_mainWindow->m_gemma->m_fileWeight);
     ui->edit_Tokenizer->setText(m_mainWindow->m_gemma->m_fileTokenizer);
+
+    ui->comboBox->addItem("2b-it");
+    ui->comboBox->addItem("7b-it");
+    ui->comboBox->addItem("2b-pt");
+    ui->comboBox->addItem("7b-pt");
+
+    int index = ui->comboBox->findText(m_mainWindow->m_gemma->m_model_type);
+    if (index != -1) {
+        ui->comboBox->setCurrentIndex(index);
+    }
+
+    connect(ui->comboBox, &QComboBox::currentTextChanged, this, &Setting::onCurrentTextChanged);
 }
 
 Setting::~Setting()
 {
     delete ui;
+}
+
+void Setting::onCurrentTextChanged(const QString &text)
+{
+    m_mainWindow->m_gemma->m_model_type = text;
+}
+
+void Setting::on_button_OK_clicked()
+{
+    accept();
+}
+
+void Setting::on_button_Cancel_clicked()
+{
+    reject();
 }
 
 void Setting::on_load_Weights_clicked()

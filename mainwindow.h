@@ -7,6 +7,7 @@
 #include <QString>
 #include <QWebChannel>
 #include <QThread>
+#include <QFile>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -27,14 +28,15 @@ public:
 
 private slots:
     void onSetting();
+    void onParseFile();
     void onSaveAs();
     void onAbout();
+    void onTimerSave();
 
     void on_doGemma(QString text);
     void on_doGemmaFinished();
 
     void on_send_clicked();
-    void on_load_clicked();
     void on_reset_clicked();
 
 private:
