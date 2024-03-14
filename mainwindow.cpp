@@ -1,9 +1,9 @@
 #include "mainwindow.h"
 #include "gemmathread.h"
-#include "ui_mainwindow.h"
 
 #include "setting.h"
 #include "parsefile.h"
+#include "parsefunction.h"
 
 #include <filesystem>
 
@@ -26,9 +26,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->progress->setFormat("Parsing Progress: %p%");
 
     QRect viewGeometry(QPoint(0, 0), size());
-    QWebEnginePage *page = new QWebEnginePage(this);
+    m_page = new QWebEnginePage(this);
     ui->webView->setContextMenuPolicy(Qt::NoContextMenu);
-    ui->webView->setPage(page);
+    ui->webView->setPage(m_page);
     ui->webView->setGeometry(viewGeometry);
     ui->webView->setUrl(QUrl("qrc:/index.html"));
 
@@ -58,19 +58,20 @@ MainWindow::MainWindow(QWidget *parent) :
     m_content.setText(welcome);
     m_channel = new QWebChannel(this);
     m_channel->registerObject(QStringLiteral("content"), &m_content);
-    page->setWebChannel(m_channel);
+    m_page->setWebChannel(m_channel);
 
     connect(ui->actionSetting, &QAction::triggered, this, &MainWindow::onSetting);
     connect(ui->actionParseFile, &QAction::triggered, this, &MainWindow::onParseFile);
+    connect(ui->actionParseFunction, &QAction::triggered, this, &MainWindow::onParseFunction);
     connect(ui->actionSaveAs, &QAction::triggered, this, &MainWindow::onSaveAs);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::onAbout);
 
-    QShortcut *shortcut = new QShortcut(Qt::Key_Return, this);
-    connect(shortcut, &QShortcut::activated, this, &MainWindow::on_send_clicked);
+    // QShortcut *shortcut = new QShortcut(Qt::Key_Return, this);
+    // connect(shortcut, &QShortcut::activated, this, &MainWindow::on_send_clicked);
 
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::onTimerSave);
-    timer->start(10000);
+    timer->start(m_timer_ms);
 
     m_gemma->start();
 }
@@ -80,17 +81,8 @@ MainWindow::~MainWindow()
     m_gemma->gemmaUninit();
     delete m_gemma;
     delete m_channel;
+    delete m_page;
     delete ui;
-}
-
-void MainWindow::saveConfig()
-{
-    QSettings settings("Gemma.QT", "Setting");
-    settings.beginGroup("Setting");
-    settings.setValue("Weight", m_gemma->m_fileWeight);
-    settings.setValue("Tokenizer", m_gemma->m_fileTokenizer);
-    settings.setValue("ModelType", m_gemma->m_model_type);
-    settings.endGroup();
 }
 
 void MainWindow::readConfig()
@@ -100,6 +92,12 @@ void MainWindow::readConfig()
     m_gemma->m_fileWeight = settings.value("Weight").toString();
     m_gemma->m_fileTokenizer = settings.value("Tokenizer").toString();
     m_gemma->m_model_type = settings.value("ModelType", "2b-it").toString();
+    m_gemma->m_config.max_tokens = settings.value("MaxTokens", 2048).toInt();
+    m_gemma->m_config.max_generated_tokens = settings.value("MaxGeneratedTokens", 1024).toInt();
+    m_gemma->m_config.temperature = settings.value("Temperature", 1.0).toFloat();
+    m_gemma->m_config.verbosity = settings.value("Verbosity", 2).toInt();
+    m_ctags = settings.value("ctags").toString();
+    m_timer_ms = settings.value("timer", 10000).toInt();
     settings.endGroup();
 }
 
@@ -124,7 +122,7 @@ void MainWindow::onSetting()
 {
     Setting dlg(this);
     if(dlg.exec() == QDialog::Accepted) {
-        saveConfig();
+        m_ctags = dlg.ctags();
     }
 }
 
@@ -138,6 +136,24 @@ void MainWindow::onParseFile()
     }
     else {
         ParseFile dlg(this);
+        if(dlg.exec() == QDialog::Accepted) {
+            if(dlg.parse()) {
+                startThread();
+            }
+        }
+    }
+}
+
+void MainWindow::onParseFunction()
+{
+    if(m_gemma->m_model == NULL) {
+        QMessageBox::warning(this, windowTitle(), "Model had not loaded.");
+    }
+    else if(m_gemma->isRunning()) {
+        QMessageBox::warning(this, windowTitle(), "You need to stop the current work first.");
+    }
+    else {
+        ParseFunction dlg(this);
         if(dlg.exec() == QDialog::Accepted) {
             if(dlg.parse()) {
                 startThread();
@@ -228,7 +244,7 @@ void MainWindow::on_doGemma(QString text)
         }
     }
     else {
-        text.replace("\n", "\n\n");
+        // text.replace("\n", "\n\n");
         m_content.appendText(text);
     }
 }
@@ -254,7 +270,9 @@ void MainWindow::on_send_clicked()
         m_gemma->m_break = true;
     }
     else {
-        m_gemma->setPrompt(ui->prompt->text().toStdString());
+        QString text = ui->prompt->toPlainText();
+        // text.replace('\n', ' ');
+        m_gemma->setPrompt(text.toStdString());
         startThread();
 
         ui->prompt->selectAll();

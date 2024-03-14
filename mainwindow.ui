@@ -16,7 +16,7 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QLineEdit" name="prompt"/>
+        <widget class="PromptEdit" name="prompt"/>
       </item>
       <item>
        <widget class="QPushButton" name="send">
@@ -56,6 +56,7 @@
      <string>Fun&amp;ctions</string>
     </property>
     <addaction name="actionParseFile"/>
+    <addaction name="actionParseFunction"/>
    </widget>
    <addaction name="menu_Functions"/>
    <widget class="QMenu" name="menu_Help">
@@ -70,6 +71,11 @@
     <action name="actionParseFile">
      <property name="text">
       <string>Parse &amp;File</string>
+     </property>
+    </action>
+    <action name="actionParseFunction">
+     <property name="text">
+      <string>Parse Func&amp;tion</string>
      </property>
     </action>
     <action name="actionSetting">

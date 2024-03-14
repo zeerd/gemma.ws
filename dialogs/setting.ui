@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+  <class>Setting</class>
+  <widget class="QDialog" name="Setting">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>620</width>
+      <height>250</height>
+     </rect>
+    </property>
+    <property name="windowTitle">
+      <string>Setting</string>
+    </property>
+    <widget class="QWidget" name="centralWidget">
+      <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout1">
+            <item>
+              <widget class="QLabel" name="label_Weights">
+                <property name="text">
+                  <string>Weights File</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_Weights">
+               <property name="minimumWidth">
+                <number>300</number>
+               </property>
+               <property name="maximumWidth">
+                <number>300</number>
+               </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboModelType">
+               <property name="minimumWidth">
+                <number>100</number>
+               </property>
+               <property name="maximumWidth">
+                <number>100</number>
+               </property>
+             </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="load_Weights">
+                <property name="text">
+                  <string>Load Weights</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </item>
+
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout2">
+            <item>
+              <widget class="QLabel" name="label_Tokenizer">
+                <property name="text">
+                  <string>Tokenizer File</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_Tokenizer">
+               <property name="minimumWidth">
+                <number>400</number>
+               </property>
+               <property name="maximumWidth">
+                <number>400</number>
+               </property>
+             </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="load_Tokenizer">
+                <property name="text">
+                  <string>Load Tokenizer</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </item>
+
+        <item>
+          <widget class="QFrame" name="split_line1">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>620</width>
+              <height>1</height>
+             </rect>
+            </property>
+            <property name="frameShape">
+              <enum>QFrame::HLine</enum>
+            </property>
+            <property name="FrameShadow">
+              <enum>QFrame::Plain</enum>
+            </property>
+          </widget>
+        </item>
+
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout3">
+            <item>
+              <widget class="QLabel" name="label_MaxTokens">
+                <property name="text">
+                  <string>Max Tokens:</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_MaxTokens">
+             </widget>
+            </item>
+            <item>
+              <widget class="QLabel" name="label_MaxGeneratedTokens">
+                <property name="text">
+                  <string>Max Generated Tokens:</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_MaxGeneratedTokens">
+             </widget>
+            </item>
+          </layout>
+        </item>
+
+        <item>
+          <widget class="QFrame" name="split_line2">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>620</width>
+              <height>1</height>
+             </rect>
+            </property>
+            <property name="frameShape">
+              <enum>QFrame::HLine</enum>
+            </property>
+            <property name="FrameShadow">
+              <enum>QFrame::Plain</enum>
+            </property>
+          </widget>
+        </item>
+
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout4">
+            <item>
+              <widget class="QLabel" name="label_AutoSave">
+                <property name="text">
+                  <string>Interval for Auto Save:</string>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_AutoSave">
+             </widget>
+            </item>
+            <item>
+              <widget class="QLabel" name="label_AutoSaveUnit">
+                <property name="text">
+                  <string>ms</string>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </item>
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout2">
+            <item>
+              <widget class="QLabel" name="label_ctags">
+                <property name="text">
+                  <string>ctags binary</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_ctags">
+               <property name="minimumWidth">
+                <number>400</number>
+               </property>
+               <property name="maximumWidth">
+                <number>400</number>
+               </property>
+             </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="button_BrowseCtags">
+                <property name="text">
+                  <string>Browse</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </item>
+
+        <item>
+          <widget class="QFrame" name="split_line3">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>620</width>
+              <height>1</height>
+             </rect>
+            </property>
+            <property name="frameShape">
+              <enum>QFrame::HLine</enum>
+            </property>
+            <property name="FrameShadow">
+              <enum>QFrame::Plain</enum>
+            </property>
+          </widget>
+        </item>
+
+        <item>
+          <layout class="QHBoxLayout" name="horizontalLayout5">
+            <item>
+              <widget class="QPushButton" name="button_OK">
+                <property name="text">
+                  <string>OK</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="button_Cancel">
+                <property name="text">
+                  <string>Cancel</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+          </layout>
+        </item>
+      </layout>
+    </widget>
+  </widget>
+  <resources/>
+  <connections/>
+</ui>

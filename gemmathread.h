@@ -23,7 +23,7 @@ public:
     explicit GemmaThread(QObject *parent = nullptr);
     ~GemmaThread();
     void setPrompt(std::string prompt);
-    void appendPrompt(std::string, std::string);
+    void appendPrompt(std::string prompt);
 
     void gemmaInit();
     void gemmaUninit();
@@ -38,6 +38,8 @@ public:
     QString m_fileTokenizer;
     QString m_model_type;
 
+    gcpp::RuntimeConfig m_config;
+
     gcpp::Gemma *m_model;
     gcpp::KVCache m_kv_cache;
     hwy::ThreadPool *m_pool;
@@ -50,7 +52,7 @@ private:
     std::string m_prompt;
     bool m_running;
 
-    std::queue<std::pair<std::string, std::string>> m_prompts;
+    std::queue<std::string> m_prompts;
 };
 
 #endif // GEMMATHREAD_H

@@ -31,15 +31,15 @@ private slots:
     void on_button_OK_clicked();
     void on_button_Cancel_clicked();
     void on_button_Browse_clicked();
-    void on_button_BrowseCtags_clicked();
+    void on_radioFile_clicked();
     void on_radioFunction_clicked();
 
 private:
-    QString getFuncBody(QFile *f, int ln);
+    QString getFuncBody(QFile *f, int sl, int el, bool bracket);
     void parseEachFunc(QString ctags, QString path);
     QString getPath() { return ui->edit_FolderFile->text(); }
     bool isFile() { return ui->radioFile->isChecked(); }
-    QString ctags() { return ui->edit_ctags->text(); }
+    QString ctags();
 
 private:
     MainWindow *m_mainWindow;

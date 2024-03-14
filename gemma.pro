@@ -7,15 +7,19 @@ HEADERS += \
     mainwindow.h \
     gemmathread.h \
     document.h \
-    setting.h \
-    parsefile.h
+    dialogs/setting.h \
+    dialogs/parsefile.h \
+    dialogs/parsefunction.h \
+    dialogs/promptedit.h
 
 SOURCES = \
     main.cpp \
     mainwindow.cpp \
     gemmathread.cpp \
-    setting.cpp \
-    parsefile.cpp
+    dialogs/setting.cpp \
+    dialogs/parsefile.cpp \
+    dialogs/parsefunction.cpp \
+    dialogs/promptedit.cpp
 
 RESOURCES = \
     resources/gemma.qrc
@@ -25,8 +29,14 @@ RESOURCES = \
 CONFIG -= qtquickcompiler
 
 CONFIG += c++17
-# CONFIG += debug
+CONFIG += debug
 
+# Enable ASAN to detect errors :  -fno-omit-frame-pointer
+QMAKE_CXXFLAGS += "-fsanitize=address"
+QMAKE_CFLAGS   += "-fsanitize=address"
+QMAKE_LFLAGS   += "-fsanitize=address"
+
+INCLUDEPATH += dialogs/
 INCLUDEPATH += gemma.cpp/
 INCLUDEPATH += gemma.cpp/build/_deps/highway-src
 INCLUDEPATH += gemma.cpp/build/_deps/sentencepiece-src/
@@ -38,8 +48,9 @@ LIBS += gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
 
 FORMS += \
     mainwindow.ui \
-    setting.ui \
-    parsefile.ui
+    dialogs/setting.ui \
+    dialogs/parsefile.ui \
+    dialogs/parsefunction.ui
 
 DISTFILES += \
     resources/3rdparty/MARKDOWN-LICENSE.txt \

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "document.h"
+#include "ui_mainwindow.h"
 
 #include <QMainWindow>
 #include <QString>
@@ -29,6 +30,7 @@ public:
 private slots:
     void onSetting();
     void onParseFile();
+    void onParseFunction();
     void onSaveAs();
     void onAbout();
     void onTimerSave();
@@ -41,9 +43,6 @@ private slots:
 
 private:
     void startThread();
-
-public:
-    void saveConfig();
     void readConfig();
 
 public:
@@ -53,6 +52,12 @@ public:
 
     QWebChannel *m_channel;
     Document m_content;
+
+    QString m_ctags;
+    int m_timer_ms;
+
+private:
+    QWebEnginePage *m_page;
 };
 
 #endif // MAINWINDOW_H

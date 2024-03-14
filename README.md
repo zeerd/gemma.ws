@@ -1,16 +1,24 @@
 # Gemma.QT
 
-Gemma with QT UI Framework.
+* 基于QT图形框架的 Gemma 聊天机器人。
+* Gemma with QT UI Framework.
+
+* 开发中……
+* Developing...
 
 ## Functions
 
-1. Local Chatbot Using Gemma-2B.
+* 本地聊天机器人；
+* Local Chatbot Using Gemma-2B.
 
-2. Parse a whole plaintext file/source-code for summary(slow).
+* 总结完整的纯文本文件的内容（很慢）；
+* Parse a whole plaintext file/source-code for summary(slow).
 
-3. Parse C/C++ source file function by function for speed up.
+* 以函数为单位逐个解析，速度相对快一些，但是精度下降；
+* Parse C/C++ source file function by function for speed up.
 
-4. Save the conversation as a Markdown file.
+* 以 Markdown 格式保存聊天过程；
+* Save the conversation as a Markdown file.
 
 ## Build
 

@@ -2,6 +2,7 @@
 #include "gemmathread.h"
 #include "ui_mainwindow.h"
 
+#include <iostream>
 #include <QFile>
 
 #include "util/app.h"
@@ -25,12 +26,12 @@ GemmaThread::~GemmaThread()
 
 void GemmaThread::setPrompt(std::string prompt)
 {
-    m_prompts.push(std::pair<std::string, std::string>("", prompt));
+    m_prompts.push(prompt);
 }
 
-void GemmaThread::appendPrompt(std::string sf, std::string prompt)
+void GemmaThread::appendPrompt(std::string prompt)
 {
-    m_prompts.push(std::pair<std::string, std::string>(sf, prompt));
+    m_prompts.push(prompt);
 }
 
 void GemmaThread::gemmaInit()
@@ -98,19 +99,13 @@ void GemmaThread::run()
     gen.seed(rd());
 
     std::string prompt_text = "";
-    while (!m_prompts.empty()) {
-        std::pair<std::string, std::string> prompt_pair = m_prompts.front();
-        prompt_text  = prompt_pair.second;
+    while (!m_prompts.empty() && !m_break) {
+        prompt_text = m_prompts.front();
         m_prompts.pop();
 
-        QString markdown_prompt = QString("\n\n**");
-        if(prompt_pair.first.length() > 0) {
-            markdown_prompt += QString(prompt_pair.first.c_str());
-        }
-        else {
-            markdown_prompt += QString(prompt_text.c_str());
-        }
-        markdown_prompt += "**\n\n";
+        QString markdown_prompt = QString("\n\n**Question:**\n\n```\n");
+        markdown_prompt += prompt_text.c_str();
+        markdown_prompt += "```\n\n**Answer:**\n\n";
         QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemma",
                     Q_ARG(QString, markdown_prompt));
         QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
@@ -139,6 +134,8 @@ void GemmaThread::run()
                   // first token of response
                   token_text.erase(0, token_text.find_first_not_of(" \t\n"));
                 }
+                std::cout << token_text;
+                fflush(stdout);
                 QMetaObject::invokeMethod(this->m_mainWindow,
                             "on_doGemma", Q_ARG(QString, token_text.c_str()));
             }
@@ -157,7 +154,7 @@ void GemmaThread::run()
             }
         }
 
-        qDebug() << tr(prompt_text.c_str());
+        // qDebug() << tr(prompt_text.c_str());
         HWY_ASSERT(m_model->Tokenizer()->Encode(prompt_text, &prompt).ok());
 
         // For both pre-trained and instruction-tuned models: prepend "<bos>" token
@@ -170,19 +167,10 @@ void GemmaThread::run()
         QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
                             "setRange", Q_ARG(int, 0), Q_ARG(int, prompt_size));
 
-        gcpp::GenerateGemma(
-                    *m_model,
-                    {.max_tokens = 2048,
-                     .max_generated_tokens = 1024,
-                     .temperature = 1.0,
-                     .verbosity = 2},
-                    prompt, /*KV cache position = */ m_abs_pos, m_kv_cache, *m_pool,
-                    stream_token, gen);
+        gcpp::GenerateGemma(*m_model, m_config,
+                prompt, m_abs_pos/*KV cache position = */, m_kv_cache, *m_pool,
+                stream_token, gen);
     }
 
-    if(m_break) {
-        QMetaObject::invokeMethod(this->m_mainWindow,
-                        "on_doGemma", Q_ARG(QString, "\n<User break>"));
-    }
     QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemmaFinished");
 }
