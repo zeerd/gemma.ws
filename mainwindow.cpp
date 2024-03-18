@@ -9,12 +9,10 @@
 
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QShortcut>
 #include <QSettings>
-#include <QStyle>
 #include <QTimer>
-
-GemmaThread* MainWindow::m_gemma = NULL;
+#include <QDateTime>
+#include <QStandardItem>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -26,13 +24,26 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->progress->setFormat("Parsing Progress: %p%");
 
     QRect viewGeometry(QPoint(0, 0), size());
-    m_page = new QWebEnginePage(this);
+    m_page = std::make_shared<QWebEnginePage>(this);
     ui->webView->setContextMenuPolicy(Qt::NoContextMenu);
-    ui->webView->setPage(m_page);
+    ui->webView->setPage(m_page.get());
     ui->webView->setGeometry(viewGeometry);
     ui->webView->setUrl(QUrl("qrc:/index.html"));
 
-    m_gemma = new GemmaThread(this);
+    ui->listSessions->setMainWindow(this);
+    ui->prompt->setMainWindow(this);
+
+    ui->splitter1->addWidget(ui->frameSession);
+    ui->splitter1->addWidget(ui->frameView);
+    ui->splitter1->setStretchFactor(0, 1);
+    ui->splitter1->setStretchFactor(1, 9);
+
+    ui->splitter2->addWidget(ui->frameMain);
+    ui->splitter2->addWidget(ui->framePrompt);
+    ui->splitter2->setStretchFactor(0, 9);
+    ui->splitter2->setStretchFactor(1, 1);
+
+    m_gemma = std::make_shared<GemmaThread>(this);
     readConfig();
 
     QString welcome = "**Start**\n";
@@ -69,19 +80,18 @@ MainWindow::MainWindow(QWidget *parent) :
     // QShortcut *shortcut = new QShortcut(Qt::Key_Return, this);
     // connect(shortcut, &QShortcut::activated, this, &MainWindow::on_send_clicked);
 
-    QTimer *timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &MainWindow::onTimerSave);
-    timer->start(m_timer_ms);
+    m_timer = std::make_shared<QTimer>(this);
+    connect(m_timer.get(), &QTimer::timeout, this, &MainWindow::onTimerSave);
+    m_timer->start(m_timer_ms);
 
     m_gemma->start();
 }
 
 MainWindow::~MainWindow()
 {
+    // m_timer-stop();
     m_gemma->gemmaUninit();
-    delete m_gemma;
     delete m_channel;
-    delete m_page;
     delete ui;
 }
 
@@ -89,13 +99,16 @@ void MainWindow::readConfig()
 {
     QSettings settings("Gemma.QT", "Setting");
     settings.beginGroup("Setting");
+
     m_gemma->m_fileWeight = settings.value("Weight").toString();
     m_gemma->m_fileTokenizer = settings.value("Tokenizer").toString();
     m_gemma->m_model_type = settings.value("ModelType", "2b-it").toString();
-    m_gemma->m_config.max_tokens = settings.value("MaxTokens", 2048).toInt();
-    m_gemma->m_config.max_generated_tokens = settings.value("MaxGeneratedTokens", 1024).toInt();
+
+    m_gemma->m_config.max_tokens = settings.value("MaxTokens", 3072).toInt();
+    m_gemma->m_config.max_generated_tokens = settings.value("MaxGeneratedTokens", 2048).toInt();
     m_gemma->m_config.temperature = settings.value("Temperature", 1.0).toFloat();
     m_gemma->m_config.verbosity = settings.value("Verbosity", 2).toInt();
+
     m_ctags = settings.value("ctags").toString();
     m_timer_ms = settings.value("timer", 10000).toInt();
     settings.endGroup();
@@ -123,6 +136,7 @@ void MainWindow::onSetting()
     Setting dlg(this);
     if(dlg.exec() == QDialog::Accepted) {
         m_ctags = dlg.ctags();
+        startThread();
     }
 }
 
@@ -203,7 +217,10 @@ void MainWindow::onTimerSave()
 void MainWindow::onAbout()
 {
     std::stringstream txt;
-    txt << "Prefill Token Batch Size      : " << gcpp::kPrefillBatchSize
+    txt << ""
+        << "Commit Version                : " << COMMIT_NAME << "\n"
+        << "\n"
+        << "Prefill Token Batch Size      : " << gcpp::kPrefillBatchSize
         << "\n"
         << "Hardware concurrency          : "
         << std::thread::hardware_concurrency() << std::endl
@@ -261,6 +278,12 @@ void MainWindow::startThread()
     m_gemma->m_break = false;
     ui->send->setText(QCoreApplication::translate("MainWindow", "Stop", nullptr));
     ui->progress->setValue(1);
+
+    if(m_session_name == "") {
+        m_session_name = QDateTime::currentDateTime()
+                        .toString("yyyy-MM-dd hh:mm:ss.zzz").toStdString();
+        ui->listSessions->appendRow(m_session_name);
+    }
     m_gemma->start();
 }
 
@@ -281,6 +304,13 @@ void MainWindow::on_send_clicked()
 
 void MainWindow::on_reset_clicked()
 {
-    m_gemma->m_abs_pos = 0;
+    m_gemma->cleanPrompt();
     m_content.setText("");
+}
+
+void MainWindow::on_newSession_clicked()
+{
+    std::string name = QDateTime::currentDateTime()
+                        .toString("yyyy-MM-dd hh:mm:ss.zzz").toStdString();
+    ui->listSessions->appendRow(name);
 }

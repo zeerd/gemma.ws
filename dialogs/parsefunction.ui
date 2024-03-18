@@ -161,13 +161,6 @@
               </property>
              </widget>
             </item>
-            <item>
-              <widget class="QPushButton" name="button_Parse">
-                <property name="text">
-                  <string>Parse</string>
-                </property>
-              </widget>
-            </item>
           </layout>
         </item>
 
@@ -195,7 +188,7 @@
             <item>
               <widget class="QPushButton" name="button_OK">
                 <property name="text">
-                  <string>OK</string>
+                  <string>Parse</string>
                 </property>
                 <property name="minimumWidth">
                  <number>100</number>

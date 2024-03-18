@@ -8,18 +8,22 @@ HEADERS += \
     gemmathread.h \
     document.h \
     dialogs/setting.h \
+    dialogs/parsetext.h \
     dialogs/parsefile.h \
     dialogs/parsefunction.h \
-    dialogs/promptedit.h
+    dialogs/promptedit.h \
+    dialogs/sessionlist.h
 
 SOURCES = \
     main.cpp \
     mainwindow.cpp \
     gemmathread.cpp \
     dialogs/setting.cpp \
+    dialogs/parsetext.cpp \
     dialogs/parsefile.cpp \
     dialogs/parsefunction.cpp \
-    dialogs/promptedit.cpp
+    dialogs/promptedit.cpp \
+    dialogs/sessionlist.cpp
 
 RESOURCES = \
     resources/gemma.qrc
@@ -55,3 +59,10 @@ FORMS += \
 DISTFILES += \
     resources/3rdparty/MARKDOWN-LICENSE.txt \
     resources/3rdparty/MARKED-LICENSE.txt
+
+defineReplace(GetCommitID) {
+    COMMITID=$$system(git -c core.fileMode=false describe --always)
+    return ($$COMMITID)
+}
+COMMIT_NAME = $$GetCommitID()
+DEFINES += COMMIT_NAME=\\\"$$COMMIT_NAME\\\"

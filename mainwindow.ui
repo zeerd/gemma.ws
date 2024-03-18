@@ -8,33 +8,101 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QProgressBar" name="progress"/>
+      <widget class="QFrame" name="frameMain">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QProgressBar" name="progress"/>
+          </item>
+          <item>
+            <widget class="QFrame" name="frameSession">
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout">
+                <item>
+                  <widget class="QPushButton" name="newSession">
+                    <property name="text">
+                     <string>New Session</string>
+                    </property>
+                  </widget>
+                </item>
+                <item>
+                  <widget class="SessionList" name="listSessions"/>
+                </item>
+              </layout>
+            </widget>
+          </item>
+          <item>
+            <widget class="QSplitter" name="splitter1">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QFrame" name="frameView">
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QVBoxLayout" name="horizontalLayout">
+                <item>
+                  <widget class="QWebEngineView" name="webView"/>
+                </item>
+              </layout>
+            </widget>
+          </item>
+        </layout>
+      </widget>
     </item>
     <item>
-     <widget class="QWebEngineView" name="webView"/>
+      <widget class="QSplitter" name="splitter2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-        <widget class="PromptEdit" name="prompt"/>
-      </item>
-      <item>
-       <widget class="QPushButton" name="send">
-        <property name="text">
-         <string>Send</string>
+      <widget class="QFrame" name="framePrompt">
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
         </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="reset">
-        <property name="text">
-         <string>Reset</string>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
         </property>
-       </widget>
-      </item>
-     </layout>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+            <widget class="PromptEdit" name="prompt"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="send">
+            <property name="text">
+             <string>Send</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="reset">
+            <property name="text">
+             <string>Reset</string>
+            </property>
+           </widget>
+          </item>
+        </layout>
+      </widget>
     </item>
-   </layout>
+  </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <widget class="QMenu" name="menu_File">

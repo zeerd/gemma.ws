@@ -1,11 +1,8 @@
 #include "gemmathread.h"
-#include "ui_mainwindow.h"
 #include "mainwindow.h"
 
 #include "setting.h"
 
-#include <QtCore>
-#include <QtNetwork>
 #include <QtWidgets>
 
 Setting::Setting(QWidget *parent)

@@ -2,12 +2,8 @@
 #include "mainwindow.h"
 #include "gemmathread.h"
 
-#include <iostream>
 
-#include <QtCore>
-#include <QtNetwork>
 #include <QtWidgets>
-#include <QProcess>
 
 ParseFunction::ParseFunction(QWidget *parent)
     : QDialog(parent),
@@ -44,6 +40,9 @@ void ParseFunction::on_button_Browse_clicked()
         tr("Open PlainText File"), "", tr("PlainText File (*.*)"));
     if (m_mainWindow->loadFile(path)) {
         ui->edit_FolderFile->setText(path);
+        if(isCLike(path)) {
+            ui->checkBracket->setChecked(true);
+        }
     }
 }
 
@@ -53,57 +52,15 @@ void ParseFunction::on_button_Load_clicked()
     if (!path.isEmpty()) {
         QFile f(path);
         if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            auto getExtension = [](const QString& fileName) -> QString {
-                int lastDotIndex = fileName.lastIndexOf(".");
-                return lastDotIndex == -1 ? "" : fileName.mid(lastDotIndex + 1);
-            };
-
-            QStringList clike = {"h", "hpp", "c", "cpp", "cc"};
-            QStringList pylike = {"py"};
-
-            m_type = "";
-            QString ext = getExtension(path);
-            QStringList arguments;
-            if(clike.contains(ext)) {
-                m_type = "C++ ";
-                arguments << "-x" << "--c++-kinds=pf" << "--language-force=c++" << path;
-            }
-            else if(pylike.contains(ext)) {
-                m_type = "Python ";
-                arguments << "-x" << "--python-kinds=f" << "--language-force=python" << path;
-            }
-            else {
-                arguments << "-x" << path;
-            }
-
-            // qDebug() << ctags << arguments.join(" ");
-            QProcess process(this);
-            process.start(m_mainWindow->m_ctags, arguments);
-            process.waitForFinished();
-
-            int rowCount = 0;
             std::vector<QStringList> data;
-            QTextStream stream(&process);
-            while (!stream.atEnd()) {
-                QString line = stream.readLine();
-                QStringList strList = line.split(QRegExp("\\s+"), Qt::SkipEmptyParts);
-                if(strList.size() > 3) {
-                    data.push_back(strList);
-                    if(strList[1] == "function") {
-                        rowCount++;
-                    }
-                }
-            }
-            sort(data.begin(), data.end(),
-                        [](const QStringList& a, const QStringList& b) {
-                return atoi(a[2].toStdString().c_str()) < atoi(b[2].toStdString().c_str());
-            });
+            int funcCount = 0;
+            getSymbolList(m_mainWindow->m_ctags, path, data, funcCount);
 
             QStringList headerLabels;
             headerLabels << "" << "Start" << "End" << "Name" << "Full Content";
             ui->tableFunctions->setHorizontalHeaderLabels(headerLabels);
 
-            ui->tableFunctions->setRowCount(rowCount);
+            ui->tableFunctions->setRowCount(funcCount);
             int i = 0;
             for (auto it = data.begin(); it != data.end(); ++it) {
                 // Access the current element
@@ -135,51 +92,6 @@ void ParseFunction::on_button_Load_clicked()
 
 }
 
-QString ParseFunction::getFuncBody(QFile *f, int sl, int el, bool bracket)
-{
-    QTextStream in(f);
-    f->seek(0);
-
-    QString line;
-    int lineNumber = 0;
-    while (!in.atEnd()) {
-        line = in.readLine();
-        lineNumber++;
-        if ((lineNumber + 1) == sl) {
-            break;
-        }
-    }
-    QString lines = "";
-    while (!in.atEnd()) {
-        line = in.readLine();
-        lines += line + "\n";
-        lineNumber++;
-        if (lineNumber == el) {
-            break;
-        }
-    }
-
-    if(bracket) {
-        int i, count = 0;
-        bool found = false;
-        for (i = 0; i < lines.size(); ++i) {
-          if (lines[i] == '{') {
-            ++count;
-            found = true;
-          }
-          else if (lines[i] == '}') {
-            --count;
-          }
-          if(found && count == 0) {
-            break;
-          }
-        }
-        lines = lines.mid(0, i + 1);
-    }
-
-    return lines;
-}
-
 bool ParseFunction::parse()
 {
     bool ret = false;
@@ -198,7 +110,7 @@ bool ParseFunction::parse()
                 QTableWidgetItem *s = ui->tableFunctions->item(i, 1);
                 QTableWidgetItem *e = ui->tableFunctions->item(i, 2);
                 if(check->isChecked()) {
-                    // This prompt comes from Gemma's Readme.md
+                    // This prompt comes from Gemma's README.md
                     // I tested many words and this one is the best.
                     // Maybe it's about fine-tune.
                     std::string pre = "What does this " + m_type + "code do:\n";

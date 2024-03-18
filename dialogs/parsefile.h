@@ -5,6 +5,7 @@
 #include <QFile>
 
 #include "ui_parsefile.h"
+#include "parsetext.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -17,7 +18,7 @@ QT_END_NAMESPACE
 QT_USE_NAMESPACE
 
 class MainWindow;
-class ParseFile : public QDialog
+class ParseFile : public QDialog, public ParseText
 {
     Q_OBJECT
 
@@ -35,8 +36,7 @@ private slots:
     void on_radioFunction_clicked();
 
 private:
-    QString getFuncBody(QFile *f, int sl, int el, bool bracket);
-    void parseEachFunc(QString ctags, QString path);
+    void parseEachFunc(QString path);
     QString getPath() { return ui->edit_FolderFile->text(); }
     bool isFile() { return ui->radioFile->isChecked(); }
     QString ctags();

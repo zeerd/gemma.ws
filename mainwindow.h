@@ -40,24 +40,26 @@ private slots:
 
     void on_send_clicked();
     void on_reset_clicked();
+    void on_newSession_clicked();
 
 private:
     void startThread();
     void readConfig();
 
 public:
-    static GemmaThread *m_gemma;
-
     Ui::MainWindow *ui;
-
-    QWebChannel *m_channel;
     Document m_content;
+
+    std::shared_ptr<GemmaThread> m_gemma;
+    std::string m_session_name;
 
     QString m_ctags;
     int m_timer_ms;
 
 private:
-    QWebEnginePage *m_page;
+    QWebChannel *m_channel;
+    std::shared_ptr<QWebEnginePage> m_page;
+    std::shared_ptr<QTimer> m_timer;
 };
 
 #endif // MAINWINDOW_H

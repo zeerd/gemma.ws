@@ -5,10 +5,7 @@
 
 PromptEdit::PromptEdit(QWidget *parent)
     : QTextEdit(parent)
-    , m_mainWindow((MainWindow*)parent->parentWidget())
 {
-    setFixedHeight(28);
-
     QString stylesheet =
       "QTextEdit:placeholder {"  // Define the placeholder style
       "  color: gray;"

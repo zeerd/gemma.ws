@@ -7,13 +7,23 @@
 #include <QThread>
 
 #include "gemma.h"  // Gemma
-#include "util/app.h"  // Gemma
+#include "util/app.h"
 #include "hwy/base.h"
 #include "hwy/contrib/thread_pool/thread_pool.h"
 #include "hwy/highway.h"
 #include "hwy/per_target.h"
 #include "hwy/profiler.h"
 #include "hwy/timer.h"
+
+class Session {
+public:
+    Session(gcpp::Model type)
+        : m_abs_pos(0)
+        , m_kv_cache(CreateKVCache(type)){
+    }
+    int m_abs_pos;
+    gcpp::KVCache m_kv_cache;
+};
 
 class MainWindow;
 class GemmaThread : public QThread {
@@ -24,12 +34,22 @@ public:
     ~GemmaThread();
     void setPrompt(std::string prompt);
     void appendPrompt(std::string prompt);
+    void cleanPrompt();
 
     void gemmaInit();
     void gemmaUninit();
 
 protected:
     void run() override;
+
+private:
+    gcpp::Model ModelType(std::string model_type) {
+        if (model_type == "2b-pt" || model_type == "2b-it") {
+            return gcpp::Model::GEMMA_2B;
+        } else {
+            return gcpp::Model::GEMMA_7B;
+        }
+    }
 
 public:
     bool m_break;
@@ -40,11 +60,8 @@ public:
 
     gcpp::RuntimeConfig m_config;
 
-    gcpp::Gemma *m_model;
-    gcpp::KVCache m_kv_cache;
-    hwy::ThreadPool *m_pool;
-    int m_abs_pos;
-    int m_current_pos; // token index within the current turn
+    std::shared_ptr<gcpp::Gemma> m_model;
+    std::shared_ptr<hwy::ThreadPool> m_pool;
 
 private:
     size_t m_num_threads;
@@ -53,6 +70,7 @@ private:
     bool m_running;
 
     std::queue<std::string> m_prompts;
+    std::map<std::string, std::shared_ptr<Session>> m_sessions;
 };
 
 #endif // GEMMATHREAD_H

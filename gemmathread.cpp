@@ -1,16 +1,15 @@
 #include "mainwindow.h"
 #include "gemmathread.h"
-#include "ui_mainwindow.h"
 
 #include <iostream>
-#include <QFile>
+#include "util/args.h"  // Path
 
-#include "util/app.h"
 
 GemmaThread::GemmaThread(QObject *parent)
         : m_break(false)
         , m_model_type("2b-it")
         , m_model(NULL)
+        , m_pool(NULL)
         , m_mainWindow((MainWindow*)parent)
         , m_running(false)
 {
@@ -20,8 +19,6 @@ GemmaThread::GemmaThread(QObject *parent)
 
 GemmaThread::~GemmaThread()
 {
-    delete m_model;
-    delete m_pool;
 }
 
 void GemmaThread::setPrompt(std::string prompt)
@@ -41,24 +38,15 @@ void GemmaThread::gemmaInit()
         QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
                             "setRange", Q_ARG(int, 0), Q_ARG(int, 0));
 
-        gcpp::LoaderArgs loader(0, NULL);
+        gcpp::Path tokenizer;
+        gcpp::Path compressed_weights;
 
-        loader.tokenizer = m_fileTokenizer.toStdString().c_str();
-        loader.model_type = m_model_type.toStdString();
-        loader.compressed_weights = m_fileWeight.toStdString().c_str();
+        tokenizer = m_fileTokenizer.toStdString().c_str();
+        compressed_weights = m_fileWeight.toStdString().c_str();
 
-        m_pool = new hwy::ThreadPool(m_num_threads);
-        gcpp::PinThreadToCore(m_num_threads - 1);  // Main thread
-
-        m_pool->Run(0, m_pool->NumThreads(),
-                 [](uint64_t /*task*/, size_t thread) { gcpp::PinThreadToCore(thread); });
-
-        m_kv_cache = CreateKVCache(loader.ModelType());
-
-        m_abs_pos = 0;
-        m_current_pos = 0;
-        m_model = new gcpp::Gemma(loader.tokenizer, loader.compressed_weights,
-                                  loader.ModelType(), *m_pool);
+        m_pool = std::make_shared<hwy::ThreadPool>(m_num_threads);
+        m_model = std::make_shared<gcpp::Gemma>(tokenizer, compressed_weights,
+                            ModelType(m_model_type.toStdString()), *m_pool);
 
         const char* instructions = "\n"
             "**Usage**\n\n"
@@ -86,6 +74,14 @@ void GemmaThread::gemmaUninit()
     }
 }
 
+void GemmaThread::cleanPrompt()
+{
+    while(!m_prompts.empty()) {
+        m_prompts.pop();
+    }
+    m_sessions[this->m_mainWindow->m_session_name]->m_abs_pos = 0;
+}
+
 void GemmaThread::run()
 {
     m_break = false;
@@ -98,8 +94,19 @@ void GemmaThread::run()
     std::random_device rd;
     gen.seed(rd());
 
+    std::shared_ptr<Session> session = NULL;
+    if(m_model != NULL) {
+        if(m_sessions.find(this->m_mainWindow->m_session_name) != m_sessions.end()) {
+            session = m_sessions[this->m_mainWindow->m_session_name];
+        }
+        else {
+            session = std::make_shared<Session>(ModelType(m_model_type.toStdString()));
+            m_sessions[this->m_mainWindow->m_session_name] = session;
+        }
+    }
+
     std::string prompt_text = "";
-    while (!m_prompts.empty() && !m_break) {
+    while (!m_prompts.empty() && !m_break && m_model != NULL) {
         prompt_text = m_prompts.front();
         m_prompts.pop();
 
@@ -111,16 +118,16 @@ void GemmaThread::run()
         QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
                     "setValue", Q_ARG(int, 1));
 
-        m_current_pos = 0;
-        auto stream_token = [this, &gen, &prompt_size,
+        int current_pos = 0; // token index within the current turn
+        auto stream_token = [this, &gen, &prompt_size, &session, &current_pos,
                              tokenizer = m_model->Tokenizer()
                              ](int token, float) {
-            ++(this->m_abs_pos);
-            ++(this->m_current_pos);
+            ++(session->m_abs_pos);
+            ++current_pos;
 
-            if (this->m_current_pos < prompt_size) {
+            if (current_pos < prompt_size) {
                 QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
-                    "setValue", Q_ARG(int, 1 + this->m_current_pos));
+                    "setValue", Q_ARG(int, 1 + current_pos));
             }
             else if (token == gcpp::EOS_ID) {
                 // GenerateGemma() may be finished by many reasons.
@@ -130,7 +137,7 @@ void GemmaThread::run()
                 std::string token_text;
                 HWY_ASSERT(tokenizer->Decode(std::vector<int>{token}, &token_text).ok());
                 // +1 since position is incremented above
-                if (this->m_current_pos == prompt_size + 1) {
+                if (current_pos == prompt_size + 1) {
                   // first token of response
                   token_text.erase(0, token_text.find_first_not_of(" \t\n"));
                 }
@@ -147,7 +154,7 @@ void GemmaThread::run()
             // For instruction-tuned models: add control tokens.
             prompt_text = "<start_of_turn>user\n" + prompt_text +
                           "<end_of_turn>\n<start_of_turn>model\n";
-            if (m_abs_pos > 0) {
+            if (session->m_abs_pos > 0) {
                 // Prepend "<end_of_turn>" token if this is a multi-turn dialogue
                 // continuation.
                 prompt_text = "<end_of_turn>\n" + prompt_text;
@@ -159,7 +166,7 @@ void GemmaThread::run()
 
         // For both pre-trained and instruction-tuned models: prepend "<bos>" token
         // if needed.
-        if (m_abs_pos == 0) {
+        if (session->m_abs_pos == 0) {
             prompt.insert(prompt.begin(), 2);
         }
 
@@ -167,9 +174,12 @@ void GemmaThread::run()
         QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
                             "setRange", Q_ARG(int, 0), Q_ARG(int, prompt_size));
 
-        gcpp::GenerateGemma(*m_model, m_config,
-                prompt, m_abs_pos/*KV cache position = */, m_kv_cache, *m_pool,
+        /*bool succ = */gcpp::GenerateGemma(*m_model, m_config,
+                prompt, session->m_abs_pos, session->m_kv_cache, *m_pool,
                 stream_token, gen);
+        // if(!succ) {
+        //     break;
+        // }
     }
 
     QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemmaFinished");
