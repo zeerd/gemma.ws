@@ -13,7 +13,7 @@ public:
     virtual ~SessionList();
     void setMainWindow(MainWindow *win) { m_mainWindow = win; }
 
-    void appendRow(std::string);
+    void appendRow(QString);
     void selectRow(int index);
 
     void onItemClicked(const QModelIndex &index);

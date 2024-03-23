@@ -12,7 +12,8 @@ HEADERS += \
     dialogs/parsefile.h \
     dialogs/parsefunction.h \
     dialogs/promptedit.h \
-    dialogs/sessionlist.h
+    dialogs/sessionlist.h \
+    dialogs/about.h
 
 SOURCES = \
     main.cpp \

@@ -51,7 +51,7 @@ public:
     Document m_content;
 
     std::shared_ptr<GemmaThread> m_gemma;
-    std::string m_session_name;
+    QString m_session_name;
 
     QString m_ctags;
     int m_timer_ms;

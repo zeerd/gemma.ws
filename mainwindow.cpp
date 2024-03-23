@@ -4,11 +4,11 @@
 #include "setting.h"
 #include "parsefile.h"
 #include "parsefunction.h"
+#include "about.h"
 
 #include <filesystem>
 
 #include <QFileDialog>
-#include <QMessageBox>
 #include <QSettings>
 #include <QTimer>
 #include <QDateTime>
@@ -46,27 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_gemma = std::make_shared<GemmaThread>(this);
     readConfig();
 
-    QString welcome = "**Start**\n";
-    if(loadFile(m_gemma->m_fileWeight)) {
-        welcome += "- " + m_gemma->m_fileWeight + " loaded.\n";
-    }
-    else {
-        m_gemma->m_fileWeight = "";
-        welcome += "- Weight file missing.\n";
-    }
-    if(loadFile(m_gemma->m_fileTokenizer)) {
-        welcome += "- " + m_gemma->m_fileTokenizer + " loaded.\n";
-    }
-    else {
-        m_gemma->m_fileTokenizer = "";
-        welcome += "- Tokenizer file missing.\n";
-    }
-    if(m_gemma->m_model_type.length() == 0) {
-        welcome += "- Model type not set.\n";
-    }
-    welcome += "\n";
-
-    m_content.setText(welcome);
+    m_content.setText("");
     m_channel = new QWebChannel(this);
     m_channel->registerObject(QStringLiteral("content"), &m_content);
     m_page->setWebChannel(m_channel);
@@ -203,46 +183,22 @@ void MainWindow::onSaveAs()
 
 void MainWindow::onTimerSave()
 {
-    QDir dir;
-    QString path = dir.homePath() + "/.Gemma.QT/";
-    dir.mkdir(path);
+    if(m_session_name != "") {
+        QDir dir;
+        QString path = dir.homePath() + "/.Gemma.QT/";
+        dir.mkdir(path);
 
-    QFile f(path + "tmp.md");
-    if (f.open(QIODevice::WriteOnly)) {
-        f.write(m_content.text().toUtf8());
-        f.close();
+        QFile f(path + m_session_name);
+        if (f.open(QIODevice::WriteOnly)) {
+            f.write(m_content.text().toUtf8());
+            f.close();
+        }
     }
 }
 
 void MainWindow::onAbout()
 {
-    std::stringstream txt;
-    txt << ""
-        << "Commit Version                : " << COMMIT_NAME << "\n"
-        << "\n"
-        << "Prefill Token Batch Size      : " << gcpp::kPrefillBatchSize
-        << "\n"
-        << "Hardware concurrency          : "
-        << std::thread::hardware_concurrency() << std::endl
-        << "Instruction set               : "
-        << hwy::TargetName(hwy::DispatchedTarget()) << " ("
-        << hwy::VectorBytes() * 8 << " bits)"
-        << "\n"
-        << "Weight Type                   : "
-        << gcpp::TypeName(gcpp::WeightT()) << "\n"
-        << "EmbedderInput Type            : "
-        << gcpp::TypeName(gcpp::EmbedderInputT()) << "\n"
-        << "\n"
-        << "Gemma.qt : https://github.com/zeerd/gemma.qt\n"
-           "[Apache2.0/BSD3]Gemma.cpp : https://github.com/google/gemma.cpp\n"
-           "[MIT]marked.js : https://github.com/chjj/marked\n"
-           "[Apache2.0]Markdown.css : https://kevinburke.bitbucket.io/markdowncss/\n"
-           "[BSD]MarkdownEditor : https://doc.qt.io/qt-5/"
-               "qtwebengine-webenginewidgets-markdowneditor-example.html\n";
-
-    QMessageBox msgBox;
-    msgBox.setStyleSheet("QDialog { font: 8pt Consolas; }");
-    msgBox.setText(txt.str().c_str());
+    AboutBox msgBox;
     msgBox.exec();
 }
 
@@ -280,9 +236,7 @@ void MainWindow::startThread()
     ui->progress->setValue(1);
 
     if(m_session_name == "") {
-        m_session_name = QDateTime::currentDateTime()
-                        .toString("yyyy-MM-dd hh:mm:ss.zzz").toStdString();
-        ui->listSessions->appendRow(m_session_name);
+        on_newSession_clicked();
     }
     m_gemma->start();
 }
@@ -310,7 +264,7 @@ void MainWindow::on_reset_clicked()
 
 void MainWindow::on_newSession_clicked()
 {
-    std::string name = QDateTime::currentDateTime()
-                        .toString("yyyy-MM-dd hh:mm:ss.zzz").toStdString();
-    ui->listSessions->appendRow(name);
+    m_session_name = QDateTime::currentDateTime()
+                                        .toString("yyyy-MM-dd hh:mm:ss.zzz");
+    ui->listSessions->appendRow(m_session_name);
 }

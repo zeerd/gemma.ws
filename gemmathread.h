@@ -70,7 +70,7 @@ private:
     bool m_running;
 
     std::queue<std::string> m_prompts;
-    std::map<std::string, std::shared_ptr<Session>> m_sessions;
+    std::map<QString, std::shared_ptr<Session>> m_sessions;
 };
 
 #endif // GEMMATHREAD_H

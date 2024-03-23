@@ -58,7 +58,7 @@ bool ParseText::getSymbolList(QString ctags, QString path,
     }
     sort(data.begin(), data.end(),
                 [](const QStringList& a, const QStringList& b) {
-        return atoi(a[2].toStdString().c_str()) < atoi(b[2].toStdString().c_str());
+        return a[2].toInt() < b[2].toInt();
     });
 
     return data.size() > 0;

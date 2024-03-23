@@ -15,9 +15,9 @@ SessionList::~SessionList()
     delete m_listmodel;
 }
 
-void SessionList::appendRow(std::string name)
+void SessionList::appendRow(QString name)
 {
-    QStandardItem *item = new QStandardItem(name.c_str());
+    QStandardItem *item = new QStandardItem(name);
     m_listmodel->appendRow(item);
     selectRow(m_listmodel->rowCount()-1);
 }
@@ -32,5 +32,5 @@ void SessionList::onItemClicked(const QModelIndex &index)
 {
   QString data = m_listmodel->data(index, Qt::DisplayRole).toString();
   // qDebug() << data;
-  m_mainWindow->m_session_name = data.toStdString();
+  m_mainWindow->m_session_name = data;
 }

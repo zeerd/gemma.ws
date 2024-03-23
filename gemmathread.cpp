@@ -48,6 +48,28 @@ void GemmaThread::gemmaInit()
         m_model = std::make_shared<gcpp::Gemma>(tokenizer, compressed_weights,
                             ModelType(m_model_type.toStdString()), *m_pool);
 
+        QString welcome = "**Start**\n";
+        if(this->m_mainWindow->loadFile(m_fileWeight)) {
+            welcome += "- " + m_fileWeight + " loaded.\n";
+        }
+        else {
+            m_fileWeight = "";
+            welcome += "- Weight file missing.\n";
+        }
+        if(this->m_mainWindow->loadFile(m_fileTokenizer)) {
+            welcome += "- " + m_fileTokenizer + " loaded.\n";
+        }
+        else {
+            m_fileTokenizer = "";
+            welcome += "- Tokenizer file missing.\n";
+        }
+        if(m_model_type.length() == 0) {
+            welcome += "- Model type not set.\n";
+        }
+        welcome += "\n";
+        QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemma",
+                    Q_ARG(QString, welcome));
+
         const char* instructions = "\n"
             "**Usage**\n\n"
             "- Enter an instruction and press enter.\n\n"
@@ -112,7 +134,7 @@ void GemmaThread::run()
 
         QString markdown_prompt = QString("\n\n**Question:**\n\n```\n");
         markdown_prompt += prompt_text.c_str();
-        markdown_prompt += "```\n\n**Answer:**\n\n";
+        markdown_prompt += "\n```\n\n**Answer:**\n\n";
         QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemma",
                     Q_ARG(QString, markdown_prompt));
         QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
