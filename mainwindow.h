@@ -3,6 +3,7 @@
 
 #include "document.h"
 #include "ui_mainwindow.h"
+#include "websocket.h"
 
 #include <QMainWindow>
 #include <QString>
@@ -26,6 +27,7 @@ public:
     ~MainWindow();
 
     bool loadFile(const QString &path);
+    void prepareThread(bool restart = false);
 
 private slots:
     void onSetting();
@@ -43,7 +45,6 @@ private slots:
     void on_newSession_clicked();
 
 private:
-    void startThread();
     void readConfig();
 
 public:
@@ -51,10 +52,16 @@ public:
     Document m_content;
 
     std::shared_ptr<GemmaThread> m_gemma;
+    std::shared_ptr<WebSocketServer> m_ws;
     QString m_session_name;
 
     QString m_ctags;
     int m_timer_ms;
+
+    int m_port;
+    bool m_WebSocketOpt;
+
+    // std::shared_ptr<WebSocketServer> m_ws;
 
 private:
     QWebChannel *m_channel;

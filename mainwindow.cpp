@@ -13,10 +13,11 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QStandardItem>
+#include <QMetaProperty>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
 {
     setWindowState(Qt::WindowMaximized);
 
@@ -43,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->splitter2->setStretchFactor(0, 9);
     ui->splitter2->setStretchFactor(1, 1);
 
-    m_gemma = std::make_shared<GemmaThread>(this);
+    m_gemma = std::make_shared<GemmaThread>();
     readConfig();
 
     m_content.setText("");
@@ -64,6 +65,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_timer.get(), &QTimer::timeout, this, &MainWindow::onTimerSave);
     m_timer->start(m_timer_ms);
 
+    if(m_WebSocketOpt) {
+        // m_ws = std::make_shared<WebSocketServer>(this);
+        // m_ws->start(m_port);
+        m_ws = std::make_shared<WebSocketServer>(m_gemma);
+    }
+
+    prepareThread();
     m_gemma->start();
 }
 
@@ -80,9 +88,9 @@ void MainWindow::readConfig()
     QSettings settings("Gemma.QT", "Setting");
     settings.beginGroup("Setting");
 
-    m_gemma->m_fileWeight = settings.value("Weight").toString();
-    m_gemma->m_fileTokenizer = settings.value("Tokenizer").toString();
-    m_gemma->m_model_type = settings.value("ModelType", "2b-it").toString();
+    m_gemma->m_fileWeight = settings.value("Weight").toString().toStdString();
+    m_gemma->m_fileTokenizer = settings.value("Tokenizer").toString().toStdString();
+    m_gemma->m_model_type = settings.value("ModelType", "2b-it").toString().toStdString();
 
     m_gemma->m_config.max_tokens = settings.value("MaxTokens", 3072).toInt();
     m_gemma->m_config.max_generated_tokens = settings.value("MaxGeneratedTokens", 2048).toInt();
@@ -91,6 +99,9 @@ void MainWindow::readConfig()
 
     m_ctags = settings.value("ctags").toString();
     m_timer_ms = settings.value("timer", 10000).toInt();
+
+    m_port = settings.value("WebSocketPort").toInt();
+    m_WebSocketOpt = settings.value("WebSocketOpt").toBool();
     settings.endGroup();
 }
 
@@ -116,7 +127,9 @@ void MainWindow::onSetting()
     Setting dlg(this);
     if(dlg.exec() == QDialog::Accepted) {
         m_ctags = dlg.ctags();
-        startThread();
+        m_WebSocketOpt = dlg.websocket();
+        prepareThread();
+        m_gemma->start();
     }
 }
 
@@ -132,7 +145,8 @@ void MainWindow::onParseFile()
         ParseFile dlg(this);
         if(dlg.exec() == QDialog::Accepted) {
             if(dlg.parse()) {
-                startThread();
+                prepareThread();
+                m_gemma->start();
             }
         }
     }
@@ -150,7 +164,8 @@ void MainWindow::onParseFunction()
         ParseFunction dlg(this);
         if(dlg.exec() == QDialog::Accepted) {
             if(dlg.parse()) {
-                startThread();
+                prepareThread();
+                m_gemma->start();
             }
         }
     }
@@ -229,16 +244,42 @@ void MainWindow::on_doGemmaFinished()
     ui->send->setText(QCoreApplication::translate("MainWindow", "Send", nullptr));
 }
 
-void MainWindow::startThread()
+void MainWindow::prepareThread(bool restart)
 {
     m_gemma->m_break = false;
-    ui->send->setText(QCoreApplication::translate("MainWindow", "Stop", nullptr));
-    ui->progress->setValue(1);
+    QString stop = QCoreApplication::translate("MainWindow", "Stop", nullptr);
+    // ui->send->setText(stop);
+    int propertyIndex = ui->send->metaObject()->indexOfProperty("text");
+    QMetaProperty property = ui->send->metaObject()->property(propertyIndex);
+    property.write(ui->send, stop);
+
+    // ui->progress->setValue(1);
+    QMetaObject::invokeMethod(ui->progress, "setValue", Q_ARG(int, 1));
 
     if(m_session_name == "") {
         on_newSession_clicked();
     }
-    m_gemma->start();
+
+    if(restart) {
+        if(m_gemma->isRunning()) {
+            m_gemma->terminate();
+        }
+    }
+
+    m_gemma->setCallback([&](int progress, int max, std::string text, bool eos) {
+        QMetaObject::invokeMethod(ui->progress, "setValue", Q_ARG(int, progress));
+        QMetaObject::invokeMethod(ui->progress,
+                                    "setRange", Q_ARG(int, 0), Q_ARG(int, max));
+        if(eos) {
+            // this->on_doGemmaFinished();
+            QMetaObject::invokeMethod(this, "on_doGemmaFinished");
+        }
+        else {
+            // this->on_doGemma(QString(text.c_str()));
+            QMetaObject::invokeMethod(this, "on_doGemma",
+                        Q_ARG(QString, QString(text.c_str())));
+        }
+    });
 }
 
 void MainWindow::on_send_clicked()
@@ -249,8 +290,9 @@ void MainWindow::on_send_clicked()
     else {
         QString text = ui->prompt->toPlainText();
         // text.replace('\n', ' ');
-        m_gemma->setPrompt(text.toStdString());
-        startThread();
+        m_gemma->setPrompt(m_session_name.toStdString(), text.toStdString());
+        prepareThread();
+        m_gemma->start();
 
         ui->prompt->selectAll();
     }

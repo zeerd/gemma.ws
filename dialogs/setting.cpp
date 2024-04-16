@@ -12,8 +12,8 @@ Setting::Setting(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->edit_Weights->setText(m_mainWindow->m_gemma->m_fileWeight);
-    ui->edit_Tokenizer->setText(m_mainWindow->m_gemma->m_fileTokenizer);
+    ui->edit_Weights->setText(m_mainWindow->m_gemma->m_fileWeight.c_str());
+    ui->edit_Tokenizer->setText(m_mainWindow->m_gemma->m_fileTokenizer.c_str());
 
     QString max_tokens;
     max_tokens.setNum(m_mainWindow->m_gemma->m_config.max_tokens);
@@ -37,10 +37,13 @@ Setting::Setting(QWidget *parent)
     ui->comboModelType->addItem("2b-pt");
     ui->comboModelType->addItem("7b-pt");
 
-    int index = ui->comboModelType->findText(m_mainWindow->m_gemma->m_model_type);
+    int index = ui->comboModelType->findText(m_mainWindow->m_gemma->m_model_type.c_str());
     if (index != -1) {
         ui->comboModelType->setCurrentIndex(index);
     }
+
+    ui->edit_WebSocket->setText("9999");
+    ui->checkWebSocket->setChecked(m_mainWindow->m_WebSocketOpt);
 
     connect(ui->comboModelType, &QComboBox::currentTextChanged, this, &Setting::onCurrentTextChanged);
 }
@@ -52,7 +55,7 @@ Setting::~Setting()
 
 void Setting::onCurrentTextChanged(const QString &text)
 {
-    m_mainWindow->m_gemma->m_model_type = text;
+    m_mainWindow->m_gemma->m_model_type = text.toStdString();
 }
 
 void Setting::on_button_OK_clicked()
@@ -68,6 +71,9 @@ void Setting::on_button_OK_clicked()
     settings.setValue("MaxGeneratedTokens", ui->edit_MaxGeneratedTokens->text());
 
     settings.setValue("ctags", ui->edit_ctags->text());
+
+    settings.setValue("WebSocketPort", ui->edit_WebSocket->text());
+    settings.setValue("WebSocketOpt", ui->checkWebSocket->isChecked());
 
     settings.endGroup();
     accept();
@@ -85,7 +91,7 @@ void Setting::on_load_Weights_clicked()
     if (m_mainWindow->loadFile(path)) {
         ui->edit_Weights->setText(path);
 
-        m_mainWindow->m_gemma->m_fileWeight = path;
+        m_mainWindow->m_gemma->m_fileWeight = path.toStdString();
         m_mainWindow->m_content.appendText("\n**Weight file**\n- " + path + " loaded.\n");
     }
 }
@@ -97,7 +103,7 @@ void Setting::on_load_Tokenizer_clicked()
     if (m_mainWindow->loadFile(path)) {
         ui->edit_Tokenizer->setText(path);
 
-        m_mainWindow->m_gemma->m_fileTokenizer = path;
+        m_mainWindow->m_gemma->m_fileTokenizer = path.toStdString();
         m_mainWindow->m_content.appendText("\n**Tokenizer file**\n- " + path + " loaded.\n");
     }
 }

@@ -5,8 +5,9 @@ QT += webchannel
 
 HEADERS += \
     mainwindow.h \
-    gemmathread.h \
     document.h \
+    core/gemmathread.h \
+    core/websocket.h \
     dialogs/setting.h \
     dialogs/parsetext.h \
     dialogs/parsefile.h \
@@ -18,7 +19,8 @@ HEADERS += \
 SOURCES = \
     main.cpp \
     mainwindow.cpp \
-    gemmathread.cpp \
+    core/gemmathread.cpp \
+    core/websocket.cpp \
     dialogs/setting.cpp \
     dialogs/parsetext.cpp \
     dialogs/parsefile.cpp \
@@ -41,15 +43,19 @@ QMAKE_CXXFLAGS += "-fsanitize=address"
 QMAKE_CFLAGS   += "-fsanitize=address"
 QMAKE_LFLAGS   += "-fsanitize=address"
 
+INCLUDEPATH += core/
 INCLUDEPATH += dialogs/
-INCLUDEPATH += gemma.cpp/
-INCLUDEPATH += gemma.cpp/build/_deps/highway-src
-INCLUDEPATH += gemma.cpp/build/_deps/sentencepiece-src/
+INCLUDEPATH += core/gemma.cpp/
+INCLUDEPATH += core/gemma.cpp/build/_deps/highway-src
+INCLUDEPATH += core/gemma.cpp/build/_deps/sentencepiece-src/
+INCLUDEPATH += core/json/include
+INCLUDEPATH += core/IXWebSocket
 
-LIBS += -Lgemma.cpp/build/
-LIBS += -Lgemma.cpp/build/_deps/highway-build
+LIBS += -Lcore/gemma.cpp/build/
+LIBS += -Lcore/gemma.cpp/build/_deps/highway-build
 LIBS += -lgemma -lhwy -lhwy_contrib
-LIBS += gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
+LIBS += core/gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
+LIBS += core/IXWebSocket/build/libixwebsocket.a -lz
 
 FORMS += \
     mainwindow.ui \

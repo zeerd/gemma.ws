@@ -20,13 +20,16 @@
 * 以 Markdown 格式保存聊天过程；
 * Save the conversation as a Markdown file.
 
+* 基于 WebSocket 的 CodeGemma Sublime Text 编程助手；
+* Coding assistant based on Code Gemma for Sublime Text.
+
 ## Build
 
 1. Install packages
 
 ```bash
 sudo apt install build-essential cmake
-sudo apt install git libtcmalloc-minimal4
+sudo apt install git libtcmalloc-minimal4 zlib1g-dev
 ```
 
 ```bash
@@ -42,13 +45,17 @@ git submodule init
 git submodule update
 
 cd gemma.cpp/build
-cmake .. -DWEIGHT_TYPE=hwy::bfloat16_t -DBUILD_TESTING=OFF -DSPM_ENABLE_SHARED=OFF
+cmake .. -DBUILD_TESTING=OFF -DSPM_ENABLE_SHARED=OFF
 make -j libgemma
 cd -
 
 qmake
 make -j
 ```
+
+Note:
+If you want to use the weight-file without `sfp`,
+add `-DWEIGHT_TYPE=hwy::bfloat16_t` to `cmake` command.
 
 3. Run
 

@@ -1,16 +1,16 @@
-#include "mainwindow.h"
 #include "gemmathread.h"
 
 #include <iostream>
+#include <fstream>
+
 #include "util/args.h"  // Path
 
 
-GemmaThread::GemmaThread(QObject *parent)
+GemmaThread::GemmaThread()
         : m_break(false)
         , m_model_type("2b-it")
         , m_model(NULL)
         , m_pool(NULL)
-        , m_mainWindow((MainWindow*)parent)
         , m_running(false)
 {
     m_num_threads = static_cast<size_t>(std::clamp(
@@ -21,42 +21,54 @@ GemmaThread::~GemmaThread()
 {
 }
 
-void GemmaThread::setPrompt(std::string prompt)
+void GemmaThread::setPrompt(std::string session, std::string prompt)
 {
+    m_session = session;
     m_prompts.push(prompt);
 }
 
-void GemmaThread::appendPrompt(std::string prompt)
+void GemmaThread::appendPrompt(std::string session, std::string prompt)
 {
+    m_session = session;
     m_prompts.push(prompt);
+}
+
+bool GemmaThread::checkFile(const std::string &path)
+{
+    // using c++, check if the given file exists.
+    bool ret = false;
+    std::ifstream fin(path);
+    if (fin) {
+        ret = true;
+    }
+    return ret;
 }
 
 void GemmaThread::gemmaInit()
 {
-    if(QFile::exists(m_fileWeight) && QFile::exists(m_fileTokenizer)
+    if(checkFile(m_fileWeight) && checkFile(m_fileTokenizer)
     && (m_model_type != "") && (m_model == NULL)) {
-        QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
-                            "setRange", Q_ARG(int, 0), Q_ARG(int, 0));
-
         gcpp::Path tokenizer;
         gcpp::Path compressed_weights;
 
-        tokenizer = m_fileTokenizer.toStdString().c_str();
-        compressed_weights = m_fileWeight.toStdString().c_str();
+        tokenizer = m_fileTokenizer.c_str();
+        compressed_weights = m_fileWeight.c_str();
+
+        ParseModelTypeAndTraining(m_model_type, model_type, model_training);
 
         m_pool = std::make_shared<hwy::ThreadPool>(m_num_threads);
         m_model = std::make_shared<gcpp::Gemma>(tokenizer, compressed_weights,
-                            ModelType(m_model_type.toStdString()), *m_pool);
+                            model_type, *m_pool);
 
-        QString welcome = "**Start**\n";
-        if(this->m_mainWindow->loadFile(m_fileWeight)) {
+        std::string welcome = "**Start**\n";
+        if(checkFile(m_fileWeight)) {
             welcome += "- " + m_fileWeight + " loaded.\n";
         }
         else {
             m_fileWeight = "";
             welcome += "- Weight file missing.\n";
         }
-        if(this->m_mainWindow->loadFile(m_fileTokenizer)) {
+        if(checkFile(m_fileTokenizer)) {
             welcome += "- " + m_fileTokenizer + " loaded.\n";
         }
         else {
@@ -67,8 +79,7 @@ void GemmaThread::gemmaInit()
             welcome += "- Model type not set.\n";
         }
         welcome += "\n";
-        QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemma",
-                    Q_ARG(QString, welcome));
+        m_callback(0, 1, welcome, false);
 
         const char* instructions = "\n"
             "**Usage**\n\n"
@@ -80,10 +91,7 @@ void GemmaThread::gemmaInit()
             "- Compute the nth fibonacci number in javascript.\n"
             "- Write a standup comedy bit about GPU programming.\n"
             "\n\n---\n";
-        QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemma",
-                    Q_ARG(QString, instructions));
-        QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
-                            "setRange", Q_ARG(int, 0), Q_ARG(int, 1));
+        m_callback(0, 1, instructions, false);
     }
 }
 
@@ -101,11 +109,19 @@ void GemmaThread::cleanPrompt()
     while(!m_prompts.empty()) {
         m_prompts.pop();
     }
-    m_sessions[this->m_mainWindow->m_session_name]->m_abs_pos = 0;
+    m_sessions[m_session]->m_abs_pos = 0;
+}
+
+void GemmaThread::start()
+{
+    m_thread = std::make_shared<std::thread>(&GemmaThread::run, this);
+    m_thread->detach();
 }
 
 void GemmaThread::run()
 {
+    std::cout << "GemmaThread::run()";
+
     m_break = false;
 
     gemmaInit();
@@ -118,12 +134,12 @@ void GemmaThread::run()
 
     std::shared_ptr<Session> session = NULL;
     if(m_model != NULL) {
-        if(m_sessions.find(this->m_mainWindow->m_session_name) != m_sessions.end()) {
-            session = m_sessions[this->m_mainWindow->m_session_name];
+        if(m_sessions.find(m_session) != m_sessions.end()) {
+            session = m_sessions[m_session];
         }
         else {
-            session = std::make_shared<Session>(ModelType(m_model_type.toStdString()));
-            m_sessions[this->m_mainWindow->m_session_name] = session;
+            session = std::make_shared<Session>(model_type);
+            m_sessions[m_session] = session;
         }
     }
 
@@ -131,14 +147,6 @@ void GemmaThread::run()
     while (!m_prompts.empty() && !m_break && m_model != NULL) {
         prompt_text = m_prompts.front();
         m_prompts.pop();
-
-        QString markdown_prompt = QString("\n\n**Question:**\n\n```\n");
-        markdown_prompt += prompt_text.c_str();
-        markdown_prompt += "\n```\n\n**Answer:**\n\n";
-        QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemma",
-                    Q_ARG(QString, markdown_prompt));
-        QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
-                    "setValue", Q_ARG(int, 1));
 
         int current_pos = 0; // token index within the current turn
         auto stream_token = [this, &gen, &prompt_size, &session, &current_pos,
@@ -148,8 +156,7 @@ void GemmaThread::run()
             ++current_pos;
 
             if (current_pos < prompt_size) {
-                QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
-                    "setValue", Q_ARG(int, 1 + current_pos));
+                m_callback(1 + current_pos, prompt_size, "", false);
             }
             else if (token == gcpp::EOS_ID) {
                 // GenerateGemma() may be finished by many reasons.
@@ -157,7 +164,7 @@ void GemmaThread::run()
             }
             else {
                 std::string token_text;
-                HWY_ASSERT(tokenizer->Decode(std::vector<int>{token}, &token_text).ok());
+                HWY_ASSERT(tokenizer->Decode(std::vector<int>{token}, &token_text));
                 // +1 since position is incremented above
                 if (current_pos == prompt_size + 1) {
                   // first token of response
@@ -165,14 +172,13 @@ void GemmaThread::run()
                 }
                 std::cout << token_text;
                 fflush(stdout);
-                QMetaObject::invokeMethod(this->m_mainWindow,
-                            "on_doGemma", Q_ARG(QString, token_text.c_str()));
+                m_callback(0, 0, token_text, false);
             }
             return !m_break;
         };
 
         std::vector<int> prompt;
-        if (m_model->model_training == gcpp::ModelTraining::GEMMA_IT) {
+        if (model_training == gcpp::ModelTraining::GEMMA_IT) {
             // For instruction-tuned models: add control tokens.
             prompt_text = "<start_of_turn>user\n" + prompt_text +
                           "<end_of_turn>\n<start_of_turn>model\n";
@@ -184,7 +190,7 @@ void GemmaThread::run()
         }
 
         // qDebug() << tr(prompt_text.c_str());
-        HWY_ASSERT(m_model->Tokenizer()->Encode(prompt_text, &prompt).ok());
+        HWY_ASSERT(m_model->Tokenizer()->Encode(prompt_text, &prompt));
 
         // For both pre-trained and instruction-tuned models: prepend "<bos>" token
         // if needed.
@@ -193,8 +199,11 @@ void GemmaThread::run()
         }
 
         prompt_size = prompt.size();
-        QMetaObject::invokeMethod(this->m_mainWindow->ui->progress,
-                            "setRange", Q_ARG(int, 0), Q_ARG(int, prompt_size));
+
+        std::string markdown_prompt = ("\n\n**Question:**\n\n```\n");
+        markdown_prompt += prompt_text.c_str();
+        markdown_prompt += "\n```\n\n**Answer:**\n\n";
+        m_callback(1, prompt_size, markdown_prompt, false);
 
         /*bool succ = */gcpp::GenerateGemma(*m_model, m_config,
                 prompt, session->m_abs_pos, session->m_kv_cache, *m_pool,
@@ -204,5 +213,8 @@ void GemmaThread::run()
         // }
     }
 
-    QMetaObject::invokeMethod(this->m_mainWindow, "on_doGemmaFinished");
+    if(m_callback != nullptr) {
+        m_callback(0, 1, "", true);
+    }
+    std::cout << "GemmaThread::run() : finished";
 }

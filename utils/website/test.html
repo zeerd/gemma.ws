@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8'/>
+  <title>CodeGemma</title>
+  <script src='https://cdn.jsdelivr.net/npm/marked/marked.min.js'></script>
+</head>
+<body>
+<button onClick="start();">Connect</button>
+<br>
+<input type="text" id="messageInput" value='main.c <|fim_prefix|>// Read two numbers from parameter and output there sum <|fim_suffix|> \n <|fim_middle|>'>
+<button onClick="sendMessage();">Send message</button>
+<div id='answer'></div>
+</body>
+</html>
+
+<script type="text/javascript">
+
+    var websocket = null;
+
+    var start = function () {
+        websocket = new WebSocket("ws://localhost:9999");
+    }
+    start();
+    websocket.onopen = function () {
+        console.log('connected')
+    }
+    websocket.onmessage = function (evt) {
+        var obj = JSON.parse(evt.data);
+        var received_msg = obj.token;
+        console.log("Received ", received_msg);
+        const diva = document.getElementById(`answer`)
+        try {
+            diva.innerHTML = marked.parse(diva.innerHTML + received_msg);
+        } catch (error) {
+            diva.innerHTML = diva.innerHTML + received_msg;
+            if("\n" == received_msg) {
+                diva.innerHTML = diva.innerHTML + "<br/>";
+            }
+        }
+    };
+    websocket.onclose = function () {
+        console.log("disconnected");
+    };
+
+    function sendMessage() {
+        const obj = { id: "0", prompt: document.getElementById("messageInput").value };
+        const json = JSON.stringify(obj);
+        websocket.send(json);
+    }
+
+</script>

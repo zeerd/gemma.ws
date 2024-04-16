@@ -2,7 +2,6 @@
 #include "mainwindow.h"
 #include "gemmathread.h"
 
-
 #include <QtWidgets>
 
 ParseFunction::ParseFunction(QWidget *parent)
@@ -89,7 +88,6 @@ void ParseFunction::on_button_Load_clicked()
                             QDir::toNativeSeparators(path), f.errorString()));
         }
     }
-
 }
 
 bool ParseFunction::parse()
@@ -115,12 +113,12 @@ bool ParseFunction::parse()
                     // Maybe it's about fine-tune.
                     std::string pre = "What does this " + m_type + "code do:\n";
                     if(whole != "") {
-                        m_mainWindow->m_gemma->appendPrompt(pre + whole);
+                        m_mainWindow->m_gemma->appendPrompt(m_mainWindow->m_session_name.toStdString(), pre + whole);
                         // qDebug() << pre.c_str() << whole.c_str();
                         whole = "";
                     }
                     QString funcline = getFuncBody(&f, s->text().toInt(), e->text().toInt(), ui->checkBracket->isChecked());
-                    m_mainWindow->m_gemma->appendPrompt(pre + funcline.toStdString());
+                    m_mainWindow->m_gemma->appendPrompt(m_mainWindow->m_session_name.toStdString(), pre + funcline.toStdString());
                     // qDebug() << pre.c_str() << funcline.toStdString().c_str();
                     ret = true;
                 }

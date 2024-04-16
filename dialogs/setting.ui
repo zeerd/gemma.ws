@@ -7,7 +7,7 @@
       <x>0</x>
       <y>0</y>
       <width>620</width>
-      <height>250</height>
+      <height>300</height>
      </rect>
     </property>
     <property name="windowTitle">
@@ -256,6 +256,41 @@
 
         <item>
           <layout class="QHBoxLayout" name="horizontalLayout5">
+            <item>
+             <widget class="QCheckBox" name="checkWebSocket">
+              <property name="text">
+                <string>WebSocket Port: </string>
+              </property>
+             </widget>
+            </item>
+            <item>
+              <widget class="QLineEdit" name="edit_WebSocket">
+             </widget>
+            </item>
+          </layout>
+        </item>
+
+        <item>
+          <widget class="QFrame" name="split_line4">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>620</width>
+              <height>1</height>
+             </rect>
+            </property>
+            <property name="frameShape">
+              <enum>QFrame::HLine</enum>
+            </property>
+            <property name="FrameShadow">
+              <enum>QFrame::Plain</enum>
+            </property>
+          </widget>
+        </item>
+
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout6">
             <item>
               <widget class="QPushButton" name="button_OK">
                 <property name="text">

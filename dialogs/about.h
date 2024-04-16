@@ -20,7 +20,7 @@ public:
             << hwy::VectorBytes() * 8 << " bits)"
             << "\n"
             << "Weight Type                   : "
-            << gcpp::TypeName(gcpp::WeightT()) << "\n"
+            << gcpp::TypeName(gcpp::GemmaWeightT()) << "\n"
             << "EmbedderInput Type            : "
             << gcpp::TypeName(gcpp::EmbedderInputT()) << "\n"
             << "\n"
@@ -29,7 +29,10 @@ public:
                "[MIT]marked.js : https://github.com/chjj/marked\n"
                "[Apache2.0]Markdown.css : https://kevinburke.bitbucket.io/markdowncss/\n"
                "[BSD]MarkdownEditor : https://doc.qt.io/qt-5/"
-                   "qtwebengine-webenginewidgets-markdowneditor-example.html\n";
+                   "qtwebengine-webenginewidgets-markdowneditor-example.html\n"
+               "[MIT]json : https://github.com/nlohmann/json.git\n"
+               "[BSD]IXWebSocket : https://github.com/machinezone/IXWebSocket\n"
+               ;
 
         setStyleSheet("QDialog { font: 8pt Consolas; }");
         setText(txt.str().c_str());
