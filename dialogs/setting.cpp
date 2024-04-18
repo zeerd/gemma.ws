@@ -12,14 +12,17 @@ Setting::Setting(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->edit_Weights->setText(m_mainWindow->m_gemma->m_fileWeight.c_str());
-    ui->edit_Tokenizer->setText(m_mainWindow->m_gemma->m_fileTokenizer.c_str());
+    QSettings settings("Gemma.QT", "Setting");
+    settings.beginGroup("Setting");
+
+    ui->edit_Weights->setText(settings.value("Weight").toString());
+    ui->edit_Tokenizer->setText(settings.value("Tokenizer").toString());
 
     QString max_tokens;
-    max_tokens.setNum(m_mainWindow->m_gemma->m_config.max_tokens);
+    max_tokens.setNum(settings.value("MaxTokens", 3072).toInt());
     ui->edit_MaxTokens->setText(max_tokens);
     QString max_generated_tokens;
-    max_generated_tokens.setNum(m_mainWindow->m_gemma->m_config.max_generated_tokens);
+    max_generated_tokens.setNum(settings.value("MaxGeneratedTokens", 2048).toInt());
     ui->edit_MaxGeneratedTokens->setText(max_generated_tokens);
 
     QString timer;
@@ -37,15 +40,15 @@ Setting::Setting(QWidget *parent)
     ui->comboModelType->addItem("2b-pt");
     ui->comboModelType->addItem("7b-pt");
 
-    int index = ui->comboModelType->findText(m_mainWindow->m_gemma->m_model_type.c_str());
+    int index = ui->comboModelType->findText(settings.value("ModelType", "2b-it").toString());
     if (index != -1) {
         ui->comboModelType->setCurrentIndex(index);
     }
 
     ui->edit_WebSocket->setText("9999");
-    ui->checkWebSocket->setChecked(m_mainWindow->m_WebSocketOpt);
 
     connect(ui->comboModelType, &QComboBox::currentTextChanged, this, &Setting::onCurrentTextChanged);
+    settings.endGroup();
 }
 
 Setting::~Setting()
@@ -55,10 +58,15 @@ Setting::~Setting()
 
 void Setting::onCurrentTextChanged(const QString &text)
 {
-    m_mainWindow->m_gemma->m_model_type = text.toStdString();
 }
 
 void Setting::on_button_OK_clicked()
+{
+    on_button_Apply_clicked();
+    accept();
+}
+
+void Setting::on_button_Apply_clicked()
 {
     QSettings settings("Gemma.QT", "Setting");
     settings.beginGroup("Setting");
@@ -73,10 +81,8 @@ void Setting::on_button_OK_clicked()
     settings.setValue("ctags", ui->edit_ctags->text());
 
     settings.setValue("WebSocketPort", ui->edit_WebSocket->text());
-    settings.setValue("WebSocketOpt", ui->checkWebSocket->isChecked());
 
     settings.endGroup();
-    accept();
 }
 
 void Setting::on_button_Cancel_clicked()
@@ -90,8 +96,6 @@ void Setting::on_load_Weights_clicked()
         tr("Open Weight File"), "", tr("Weight File (*.sbs)"));
     if (m_mainWindow->loadFile(path)) {
         ui->edit_Weights->setText(path);
-
-        m_mainWindow->m_gemma->m_fileWeight = path.toStdString();
         m_mainWindow->m_content.appendText("\n**Weight file**\n- " + path + " loaded.\n");
     }
 }
@@ -102,8 +106,6 @@ void Setting::on_load_Tokenizer_clicked()
         tr("Open Tokenizer File"), "", tr("Tokenizer File (*.spm)"));
     if (m_mainWindow->loadFile(path)) {
         ui->edit_Tokenizer->setText(path);
-
-        m_mainWindow->m_gemma->m_fileTokenizer = path.toStdString();
         m_mainWindow->m_content.appendText("\n**Tokenizer file**\n- " + path + " loaded.\n");
     }
 }

@@ -27,7 +27,7 @@
     }
     websocket.onmessage = function (evt) {
         var obj = JSON.parse(evt.data);
-        var received_msg = obj.token;
+        var received_msg = obj.choices.messages.content;
         console.log("Received ", received_msg);
         const diva = document.getElementById(`answer`)
         try {
@@ -44,7 +44,7 @@
     };
 
     function sendMessage() {
-        const obj = { id: "0", prompt: document.getElementById("messageInput").value };
+        const obj = { id: "0", messages: {content: document.getElementById("messageInput").value }};
         const json = JSON.stringify(obj);
         websocket.send(json);
     }

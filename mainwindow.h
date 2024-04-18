@@ -3,13 +3,14 @@
 
 #include "document.h"
 #include "ui_mainwindow.h"
-#include "websocket.h"
+#include "websocketclient.h"
 
 #include <QMainWindow>
 #include <QString>
 #include <QWebChannel>
 #include <QThread>
 #include <QFile>
+#include <QProcess>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -27,7 +28,7 @@ public:
     ~MainWindow();
 
     bool loadFile(const QString &path);
-    void prepareThread(bool restart = false);
+    void prepare();
 
 private slots:
     void onSetting();
@@ -45,28 +46,27 @@ private slots:
     void on_newSession_clicked();
 
 private:
-    void readConfig();
+    QString readConfig();
 
 public:
     Ui::MainWindow *ui;
     Document m_content;
 
     std::shared_ptr<GemmaThread> m_gemma;
-    std::shared_ptr<WebSocketServer> m_ws;
+    std::shared_ptr<WebSocketClient> m_ws;
     QString m_session_name;
 
     QString m_ctags;
     int m_timer_ms;
 
     int m_port;
-    bool m_WebSocketOpt;
-
-    // std::shared_ptr<WebSocketServer> m_ws;
 
 private:
     QWebChannel *m_channel;
     std::shared_ptr<QWebEnginePage> m_page;
     std::shared_ptr<QTimer> m_timer;
+    std::shared_ptr<QProcess> m_server;
+    bool m_processing;
 };
 
 #endif // MAINWINDOW_H

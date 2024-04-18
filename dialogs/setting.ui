@@ -257,7 +257,7 @@
         <item>
           <layout class="QHBoxLayout" name="horizontalLayout5">
             <item>
-             <widget class="QCheckBox" name="checkWebSocket">
+             <widget class="QLabel" name="labelWebSocket">
               <property name="text">
                 <string>WebSocket Port: </string>
               </property>
@@ -295,6 +295,19 @@
               <widget class="QPushButton" name="button_OK">
                 <property name="text">
                   <string>OK</string>
+                </property>
+                <property name="minimumWidth">
+                 <number>100</number>
+                </property>
+                <property name="maximumWidth">
+                 <number>100</number>
+                </property>
+              </widget>
+            </item>
+            <item>
+              <widget class="QPushButton" name="button_Apply">
+                <property name="text">
+                  <string>Apply</string>
                 </property>
                 <property name="minimumWidth">
                  <number>100</number>

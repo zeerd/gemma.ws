@@ -69,7 +69,7 @@ bool ParseFile::parse()
             if(isFile()) {
                 // lines.replace('\n', ' ');
                 std::string pre = "What does this text do :";
-                m_mainWindow->m_gemma->setPrompt(m_mainWindow->m_session_name.toStdString(), pre + lines.toStdString());
+                m_mainWindow->m_ws->sendMessage(QString(pre.c_str()) + lines.toStdString().c_str());
             }
             else {
                 parseEachFunc(path);
@@ -108,8 +108,8 @@ void ParseFile::parseEachFunc(QString path)
                 // I tested many words and this one is the best.
                 // Maybe it's about fine-tune.
                 std::string pre = "What does this " + m_type + "code do:\n";
-                m_mainWindow->m_gemma->appendPrompt(m_mainWindow->m_session_name.toStdString(), pre + funcline.toStdString());
                 // qDebug() << pre.c_str() << funcline.toStdString().c_str();
+                m_mainWindow->m_ws->sendMessage(pre.c_str() + funcline);
             }
         }
     }

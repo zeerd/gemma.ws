@@ -1,6 +1,7 @@
 import sublime, sublime_plugin
 import threading
 import json
+import time
 import CodeGemma.websocket
 
 class CodeGemmaCommand(sublime_plugin.TextCommand):
@@ -17,12 +18,43 @@ class CodeGemmaCommand(sublime_plugin.TextCommand):
 
     def get_token(self, msg):
         token = json.loads(msg)
-        return token["id"], token["token"]
+        return token["id"], token["choices"]["messages"]["content"]
+
+    def get_percent(self, msg):
+        token = json.loads(msg)
+        a = token["usage"]["completion_tokens"]
+        b = token["usage"]["total_tokens"]
+        p = 0
+        if b > 0:
+            p = a * 100 / b;
+        return str(round(p, 2)) + "%"
+
+    def get_fun_range(self):
+        row = 0
+        last_row = 0
+        start = 0
+        end = self.view.size()
+        for region in  self.view.sel():
+            region_row, region_col =  self.view.rowcol(region.begin())
+            function_regions = self.view.find_by_selector('meta.function - meta.function.inline')
+            if function_regions:
+                for r in reversed(function_regions):
+                    start = self.view.line(r).begin()
+                    row, col = self.view.rowcol(r.begin())
+                    if row <= region_row:
+                        lines = self.view.substr(r)
+                        break
+                    else:
+                        last_row = row
+                    end = self.view.line(r).begin()
+        print(start)
+        print(end)
+        return start, end
 
     def gemma_thread(self):
         settings = sublime.load_settings('CodeGemma.sublime-settings')
         service = settings.get('Service', 'ws://localhost:9999')
-        oneline = settings.get('OneLine', 'true')
+        wholefile = settings.get('WholeFile', 'false')
 
         self.view.set_status('CodeGemmaCommand', 'CodeGemma<----->')
         gemma_progress = threading.Thread(target=self.gemma_progress,
@@ -32,16 +64,16 @@ class CodeGemmaCommand(sublime_plugin.TextCommand):
         data = self.view.substr(sublime.Region(0, self.view.size()))
         cursor = self.view.sel()[0].begin()
 
-        if oneline == "true":
-            line = self.view.line(cursor)
-            data_before = data[line.begin():line.end()].strip()
-            data_after = ""
+        start, end = self.get_fun_range()
+        if (wholefile) and (start != end):
+            data_before = data[start:cursor]
+            data_after = data[cursor:end]
         else:
             data_before = data[0:cursor]
             data_after = data[cursor:]
 
-        print('Received: ' + data_before)
-        print('Received: ' + data_after)
+        print('fim_prefix: ' + data_before)
+        print('fim_suffix: ' + data_after)
 
         window = sublime.active_window()
         output = window.create_output_panel("CodeGemmaResults")
@@ -53,15 +85,17 @@ class CodeGemmaCommand(sublime_plugin.TextCommand):
         ws.connect(service)
 
         filename = self.view.file_name().split('/')[-1]
-        data = { 'id' : 0, 'prompt' : "" + filename + " <|fim_prefix|>" + data_before +
-                " <|fim_suffix|> " + data_after + " <|fim_middle|>" }
+        data = { 'id' : 0,
+                 'messages' : { 'content' : "" + filename + " <|fim_prefix|>" + data_before +
+                " <|fim_suffix|> " + data_after + " <|fim_middle|>" } }
         ws.send(json.dumps(data))
+
         token_id = ""
         token_txt = ""
         while token_txt != "<|fim_middle|>":
             token_id, token_txt = self.get_token(ws.recv())
-            print(token_txt)
-            output.run_command('append', {'characters': "."})
+            output.run_command('erase_view')
+            output.run_command('append', {'characters' : " " + self.get_percent(ws.recv()) })
 
         output.run_command('append', {'characters': "\n\n"})
 

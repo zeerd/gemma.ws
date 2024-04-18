@@ -5,6 +5,7 @@
 #include "parsefile.h"
 #include "parsefunction.h"
 #include "about.h"
+#include "logger.h"
 
 #include <filesystem>
 
@@ -15,9 +16,12 @@
 #include <QStandardItem>
 #include <QMetaProperty>
 
+LogFunc logger::func = nullptr;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_processing(false)
 {
     setWindowState(Qt::WindowMaximized);
 
@@ -44,8 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->splitter2->setStretchFactor(0, 9);
     ui->splitter2->setStretchFactor(1, 1);
 
-    m_gemma = std::make_shared<GemmaThread>();
-    readConfig();
+    m_gemma = std::make_shared<GemmaThread>(readConfig().toStdString());
 
     m_content.setText("");
     m_channel = new QWebChannel(this);
@@ -65,44 +68,39 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_timer.get(), &QTimer::timeout, this, &MainWindow::onTimerSave);
     m_timer->start(m_timer_ms);
 
-    if(m_WebSocketOpt) {
-        // m_ws = std::make_shared<WebSocketServer>(this);
-        // m_ws->start(m_port);
-        m_ws = std::make_shared<WebSocketServer>(m_gemma);
-    }
+    m_ws = std::make_shared<WebSocketClient>(this);
 
-    prepareThread();
-    m_gemma->start();
+    const char* instructions = "\n"
+        "**Usage**\n\n"
+        "- Enter an instruction and press enter.\n\n"
+        "**Examples**\n\n"
+        "- Write an email to grandma thanking her for the cookies.\n"
+        "- What are some historical attractions to visit around "
+        "Massachusetts?\n"
+        "- Compute the nth fibonacci number in javascript.\n"
+        "- Write a standup comedy bit about GPU programming.\n"
+        "\n\n---\n";
+    m_content.appendText(instructions);
 }
 
 MainWindow::~MainWindow()
 {
-    // m_timer-stop();
-    m_gemma->gemmaUninit();
     delete m_channel;
     delete ui;
 }
 
-void MainWindow::readConfig()
+QString MainWindow::readConfig()
 {
     QSettings settings("Gemma.QT", "Setting");
     settings.beginGroup("Setting");
-
-    m_gemma->m_fileWeight = settings.value("Weight").toString().toStdString();
-    m_gemma->m_fileTokenizer = settings.value("Tokenizer").toString().toStdString();
-    m_gemma->m_model_type = settings.value("ModelType", "2b-it").toString().toStdString();
-
-    m_gemma->m_config.max_tokens = settings.value("MaxTokens", 3072).toInt();
-    m_gemma->m_config.max_generated_tokens = settings.value("MaxGeneratedTokens", 2048).toInt();
-    m_gemma->m_config.temperature = settings.value("Temperature", 1.0).toFloat();
-    m_gemma->m_config.verbosity = settings.value("Verbosity", 2).toInt();
 
     m_ctags = settings.value("ctags").toString();
     m_timer_ms = settings.value("timer", 10000).toInt();
 
     m_port = settings.value("WebSocketPort").toInt();
-    m_WebSocketOpt = settings.value("WebSocketOpt").toBool();
     settings.endGroup();
+
+    return settings.fileName();
 }
 
 bool MainWindow::loadFile(const QString &path)
@@ -124,50 +122,52 @@ bool MainWindow::loadFile(const QString &path)
 
 void MainWindow::onSetting()
 {
+    logger(logger::TI).os << __FUNCTION__;
     Setting dlg(this);
     if(dlg.exec() == QDialog::Accepted) {
         m_ctags = dlg.ctags();
-        m_WebSocketOpt = dlg.websocket();
-        prepareThread();
-        m_gemma->start();
+        m_gemma->stop();
+        m_gemma = nullptr;
+        m_ws = nullptr;
+        m_gemma = std::make_shared<GemmaThread>(readConfig().toStdString());
+        m_ws = std::make_shared<WebSocketClient>(this);
     }
+    logger(logger::TO).os << __FUNCTION__;
 }
 
 void MainWindow::onParseFile()
 {
-    if(m_gemma->m_model == NULL) {
-        QMessageBox::warning(this, windowTitle(), "Model had not loaded.");
-    }
-    else if(m_gemma->isRunning()) {
+    if(m_processing) {
         QMessageBox::warning(this, windowTitle(), "You need to stop the current work first.");
     }
-    else {
+    else if(m_ws->isValid()) {
         ParseFile dlg(this);
         if(dlg.exec() == QDialog::Accepted) {
             if(dlg.parse()) {
-                prepareThread();
-                m_gemma->start();
+                prepare();
             }
         }
+    }
+    else {
+        QMessageBox::warning(this, windowTitle(), "Gemma Server Lost.");
     }
 }
 
 void MainWindow::onParseFunction()
 {
-    if(m_gemma->m_model == NULL) {
-        QMessageBox::warning(this, windowTitle(), "Model had not loaded.");
-    }
-    else if(m_gemma->isRunning()) {
+    if(m_processing) {
         QMessageBox::warning(this, windowTitle(), "You need to stop the current work first.");
     }
-    else {
+    else if(m_ws->isValid()) {
         ParseFunction dlg(this);
         if(dlg.exec() == QDialog::Accepted) {
             if(dlg.parse()) {
-                prepareThread();
-                m_gemma->start();
+                prepare();
             }
         }
+    }
+    else {
+        QMessageBox::warning(this, windowTitle(), "Gemma Server Lost.");
     }
 }
 
@@ -239,68 +239,47 @@ void MainWindow::on_doGemma(QString text)
 
 void MainWindow::on_doGemmaFinished()
 {
+    m_processing = false;
     m_content.appendText("\n\n---\n");
     ui->progress->setValue(0);
     ui->send->setText(QCoreApplication::translate("MainWindow", "Send", nullptr));
 }
 
-void MainWindow::prepareThread(bool restart)
+void MainWindow::prepare()
 {
-    m_gemma->m_break = false;
     QString stop = QCoreApplication::translate("MainWindow", "Stop", nullptr);
-    // ui->send->setText(stop);
     int propertyIndex = ui->send->metaObject()->indexOfProperty("text");
     QMetaProperty property = ui->send->metaObject()->property(propertyIndex);
     property.write(ui->send, stop);
 
-    // ui->progress->setValue(1);
     QMetaObject::invokeMethod(ui->progress, "setValue", Q_ARG(int, 1));
 
     if(m_session_name == "") {
         on_newSession_clicked();
     }
-
-    if(restart) {
-        if(m_gemma->isRunning()) {
-            m_gemma->terminate();
-        }
-    }
-
-    m_gemma->setCallback([&](int progress, int max, std::string text, bool eos) {
-        QMetaObject::invokeMethod(ui->progress, "setValue", Q_ARG(int, progress));
-        QMetaObject::invokeMethod(ui->progress,
-                                    "setRange", Q_ARG(int, 0), Q_ARG(int, max));
-        if(eos) {
-            // this->on_doGemmaFinished();
-            QMetaObject::invokeMethod(this, "on_doGemmaFinished");
-        }
-        else {
-            // this->on_doGemma(QString(text.c_str()));
-            QMetaObject::invokeMethod(this, "on_doGemma",
-                        Q_ARG(QString, QString(text.c_str())));
-        }
-    });
+    m_processing = true;
 }
 
 void MainWindow::on_send_clicked()
 {
-    if(m_gemma->isRunning()) {
-        m_gemma->m_break = true;
+    if(m_ws->isValid()) {
+        if(m_processing) {
+            m_ws->sendStop();
+        }
+        else {
+            prepare();
+            QString text = ui->prompt->toPlainText();
+            m_ws->sendMessage(text);
+            ui->prompt->selectAll();
+        }
     }
     else {
-        QString text = ui->prompt->toPlainText();
-        // text.replace('\n', ' ');
-        m_gemma->setPrompt(m_session_name.toStdString(), text.toStdString());
-        prepareThread();
-        m_gemma->start();
-
-        ui->prompt->selectAll();
+        QMessageBox::warning(this, windowTitle(), "Gemma Server Lost.");
     }
 }
 
 void MainWindow::on_reset_clicked()
 {
-    m_gemma->cleanPrompt();
     m_content.setText("");
 }
 

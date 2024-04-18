@@ -1,7 +1,15 @@
 # Gemma.QT
 
-* 基于QT图形框架的 Gemma 聊天机器人。
+## Gemma & ServerGemma
+
+* We have two kinds of program.
+  * 我们有两个版本的程序。
+
 * Gemma with QT UI Framework.
+  * 基于QT图形框架的 Gemma 聊天机器人。
+
+* `ServerGemma` as a service program and a group of client programs.
+  * 一个后台服务程序`ServerGemma`和一些客户端程序。
 
 * 开发中……
 * Developing...
@@ -23,54 +31,24 @@
 * 基于 WebSocket 的 CodeGemma Sublime Text 编程助手；
 * Coding assistant based on Code Gemma for Sublime Text.
 
-## Build
+## Build & Run
 
-1. Install packages
-
-```bash
-sudo apt install build-essential cmake
-sudo apt install git libtcmalloc-minimal4 zlib1g-dev
-```
-
-```bash
-sudo apt install libqt5webview5-dev libqt5webchannel5-dev qtwebengine5-dev
-```
-
-2. Compile project.
-
-```bash
-git clone https://github.com/zeerd/gemma.qt
-cd gemma.qt
-git submodule init
-git submodule update
-
-cd gemma.cpp/build
-cmake .. -DBUILD_TESTING=OFF -DSPM_ENABLE_SHARED=OFF
-make -j libgemma
-cd -
-
-qmake
-make -j
-```
-
-Note:
-If you want to use the weight-file without `sfp`,
-add `-DWEIGHT_TYPE=hwy::bfloat16_t` to `cmake` command.
-
-3. Run
+1. Prepare packages and Compile project.
 
 Visit [the Gemma model page on
 Kaggle](https://www.kaggle.com/models/google/gemma) and
 select `Model Variations|> Gemma C++`.
 Download the `2b-it-sfp` model and decompress.
 
-```bash
-./gemma
-```
+Run `./travis.sh` to compile and run.
 
-Select decompressed files by `Edit->Setting`.
+Note:
+If you want to use the weight-file without `sfp`,
+add `-DWEIGHT_TYPE=hwy::bfloat16_t` to `cmake` command.
 
-4. Debug
+Select weight-files by `Edit->Setting`.
+
+2. Debug
 
 Way to [debug](https://doc.qt.io/qt-6/qtwebengine-debugging.html) the WebEngine.
 

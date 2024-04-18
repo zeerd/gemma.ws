@@ -1,11 +1,11 @@
-[submodule "core/gemma.cpp"]
-	path = core/gemma.cpp
+[submodule "3rdparty/gemma.cpp"]
+	path = 3rdparty/gemma.cpp
 	url = https://github.com/google/gemma.cpp
 
-[submodule "core/json"]
-	path = core/json
+[submodule "3rdparty/json"]
+	path = 3rdparty/json
 	url = https://github.com/nlohmann/json.git
 
-[submodule "core/IXWebSocket"]
-	path = core/IXWebSocket
+[submodule "3rdparty/IXWebSocket"]
+	path = 3rdparty/IXWebSocket
 	url = https://github.com/machinezone/IXWebSocket

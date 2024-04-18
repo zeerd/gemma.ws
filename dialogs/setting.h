@@ -26,10 +26,10 @@ public:
     ~Setting();
 
     QString ctags() { return ui->edit_ctags->text(); }
-    bool websocket() { return ui->checkWebSocket->isChecked(); }
 
 private slots:
     void on_button_OK_clicked();
+    void on_button_Apply_clicked();
     void on_button_Cancel_clicked();
     void on_button_BrowseCtags_clicked();
     void on_load_Weights_clicked();

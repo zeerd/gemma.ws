@@ -113,17 +113,16 @@ bool ParseFunction::parse()
                     // Maybe it's about fine-tune.
                     std::string pre = "What does this " + m_type + "code do:\n";
                     if(whole != "") {
-                        m_mainWindow->m_gemma->appendPrompt(m_mainWindow->m_session_name.toStdString(), pre + whole);
                         // qDebug() << pre.c_str() << whole.c_str();
+                        m_mainWindow->m_ws->sendMessage(QString(pre.c_str()) + whole.c_str());
                         whole = "";
                     }
                     QString funcline = getFuncBody(&f, s->text().toInt(), e->text().toInt(), ui->checkBracket->isChecked());
-                    m_mainWindow->m_gemma->appendPrompt(m_mainWindow->m_session_name.toStdString(), pre + funcline.toStdString());
                     // qDebug() << pre.c_str() << funcline.toStdString().c_str();
+                    m_mainWindow->m_ws->sendMessage(QString(pre.c_str()) + funcline);
                     ret = true;
                 }
             }
-
         }
         else {
             QMessageBox::warning(this, windowTitle(),

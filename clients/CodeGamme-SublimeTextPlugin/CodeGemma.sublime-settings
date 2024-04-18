@@ -1,4 +1,4 @@
 {
     "Service": "ws://localhost:9999",
-    "OneLine": "true",
+    "WholeFile": "false",
 }
