@@ -1,15 +1,20 @@
-# Gemma.QT
+# Gemma.WS
 
-## Gemma & ServerGemma
+The core of this repo is ServerGemma.
+It's a Gemma server basic on
+[WebSocket](https://github.com/machinezone/IXWebSocket),
+[json](https://github.com/nlohmann/json.git)
+and [GemmaC++](https://github.com/google/gemma.cpp).
 
-* We have two kinds of program.
-  * 我们有两个版本的程序。
+本工程的核心部分是 `ServerGemma`。
+基于[WebSocket](https://github.com/machinezone/IXWebSocket) 、
+[json](https://github.com/nlohmann/json.git)
+和 [GemmaC++](https://github.com/google/gemma.cpp) 搭建而成。
 
-* Gemma with QT UI Framework.
-  * 基于QT图形框架的 Gemma 聊天机器人。
+## Gemma.QT
 
-* `ServerGemma` as a service program and a group of client programs.
-  * 一个后台服务程序`ServerGemma`和一些客户端程序。
+* Gemma.QT is one of the developing client based on QT UI Framework.
+  * Gemma.QT 是基于QT图形框架的 Gemma 聊天机器人客户端。
 
 * 开发中……
 * Developing...

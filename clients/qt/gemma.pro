@@ -44,19 +44,19 @@ QMAKE_LFLAGS   += "-fsanitize=address"
 
 INCLUDEPATH += dialogs/
 
-INCLUDEPATH += server/
-INCLUDEPATH += 3rdparty/gemma.cpp/build/_deps/highway-src
-INCLUDEPATH += 3rdparty/gemma.cpp/build/_deps/sentencepiece-src/
-INCLUDEPATH += 3rdparty/gemma.cpp/
-INCLUDEPATH += 3rdparty/json/include
-INCLUDEPATH += 3rdparty/IXWebSocket
+INCLUDEPATH += ../../server/
+INCLUDEPATH += ../../3rdparty/gemma.cpp/build/_deps/highway-src
+INCLUDEPATH += ../../3rdparty/gemma.cpp/build/_deps/sentencepiece-src/
+INCLUDEPATH += ../../3rdparty/gemma.cpp/
+INCLUDEPATH += ../../3rdparty/json/include
+INCLUDEPATH += ../../3rdparty/IXWebSocket
 
-LIBS += build/server/libGemmaCore.a
-LIBS += 3rdparty/gemma.cpp/build/libgemma.a
-LIBS += 3rdparty/gemma.cpp/build/_deps/highway-build/libhwy.a
-LIBS += 3rdparty/gemma.cpp/build/_deps/highway-build/libhwy_contrib.a
-LIBS += 3rdparty/gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
-LIBS += build/3rdparty/IXWebSocket/libixwebsocket.a -lz
+LIBS += ../../build/server/libGemmaCore.a
+LIBS += ../../3rdparty/gemma.cpp/build/libgemma.a
+LIBS += ../../3rdparty/gemma.cpp/build/_deps/highway-build/libhwy.a
+LIBS += ../../3rdparty/gemma.cpp/build/_deps/highway-build/libhwy_contrib.a
+LIBS += ../../3rdparty/gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
+LIBS += ../../build/3rdparty/IXWebSocket/libixwebsocket.a -lz
 
 FORMS += \
     mainwindow.ui \

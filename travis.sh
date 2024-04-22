@@ -19,7 +19,9 @@ cmake ..
 make -j4
 cd -
 
+cd clients/qt
 qmake
 make -j4
+cd -
 
-./gemma
+./clients/qt/gemma
