@@ -32,5 +32,5 @@ void SessionList::onItemClicked(const QModelIndex &index)
 {
   QString data = m_listmodel->data(index, Qt::DisplayRole).toString();
   // qDebug() << data;
-  m_mainWindow->m_session_name = data;
+  m_mainWindow->m_ws->setSession(data);
 }

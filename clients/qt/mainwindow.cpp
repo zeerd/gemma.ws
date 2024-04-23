@@ -17,6 +17,8 @@
 #include <QMetaProperty>
 
 LogFunc logger::func = nullptr;
+bool logger::trace_off = true;
+int logger::threshold = logger::I;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -85,6 +87,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    m_gemma->stop();
+    m_gemma->join();
+
     delete m_channel;
     delete ui;
 }
@@ -127,6 +132,7 @@ void MainWindow::onSetting()
     if(dlg.exec() == QDialog::Accepted) {
         m_ctags = dlg.ctags();
         m_gemma->stop();
+        m_gemma->join();
         m_gemma = nullptr;
         m_ws = nullptr;
         m_gemma = std::make_shared<GemmaThread>(readConfig().toStdString());
@@ -198,12 +204,12 @@ void MainWindow::onSaveAs()
 
 void MainWindow::onTimerSave()
 {
-    if(m_session_name != "") {
+    if(m_ws->session() != "") {
         QDir dir;
         QString path = dir.homePath() + "/.Gemma.QT/";
         dir.mkdir(path);
 
-        QFile f(path + m_session_name);
+        QFile f(path + m_ws->session());
         if (f.open(QIODevice::WriteOnly)) {
             f.write(m_content.text().toUtf8());
             f.close();
@@ -254,7 +260,7 @@ void MainWindow::prepare()
 
     QMetaObject::invokeMethod(ui->progress, "setValue", Q_ARG(int, 1));
 
-    if(m_session_name == "") {
+    if(m_ws->session() == "") {
         on_newSession_clicked();
     }
     m_processing = true;
@@ -285,7 +291,8 @@ void MainWindow::on_reset_clicked()
 
 void MainWindow::on_newSession_clicked()
 {
-    m_session_name = QDateTime::currentDateTime()
+    QString session = QDateTime::currentDateTime()
                                         .toString("yyyy-MM-dd hh:mm:ss.zzz");
-    ui->listSessions->appendRow(m_session_name);
+    m_ws->setSession(session);
+    ui->listSessions->appendRow(session);
 }

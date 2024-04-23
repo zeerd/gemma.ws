@@ -23,16 +23,6 @@
 #include <ixwebsocket/IXWebSocket.h>
 #include <ixwebsocket/IXWebSocketServer.h>
 
-class Session {
-public:
-    Session(gcpp::Model type)
-        : m_abs_pos(0)
-        , m_kv_cache(CreateKVCache(type)){
-    }
-    int m_abs_pos;
-    gcpp::KVCache m_kv_cache;
-};
-
 class GemmaThread : public std::thread {
 
 public:
@@ -41,16 +31,22 @@ public:
 public:
     explicit GemmaThread(const std::string &file);
     virtual ~GemmaThread();
-    void setPrompt(std::string session, std::string prompt, callback cb, void *user);
-    void cleanPrompt();
 
-    bool init(const std::string &path);
     void stop();
 
+    bool running() { return m_running; }
+
 private:
+    void threadFunction();
+
     bool checkFile(const std::string &path);
     void signal();
-    void threadFunction(const std::string &path);
+
+    bool config();
+    void run();
+
+    void setPrompt(std::string session, std::string prompt, callback cb, void *user);
+    void cleanPrompt();
 
     bool webSocketStart(int port);
     void webSocketStop();
@@ -58,48 +54,52 @@ private:
     void OnWebSocketOpen(std::shared_ptr<ix::ConnectionState> connectionState,
                                  ix::WebSocket& webSocket,
                                  const ix::WebSocketMessagePtr& msg);
-
     void OnWebSocketMessage(std::shared_ptr<ix::ConnectionState> connectionState,
                                  ix::WebSocket& webSocket,
                                  const ix::WebSocketMessagePtr& msg);
 
-protected:
-    void run();
+private:
+    class Session {
+    public:
+        Session(gcpp::Model type)
+            : m_abs_pos(0)
+            , m_kv_cache(CreateKVCache(type)){
+        }
+        int m_abs_pos;
+        gcpp::KVCache m_kv_cache;
+    };
 
-public:
+    std::string m_session;
+    std::map<std::string, std::shared_ptr<Session>> m_sessions;
+
+private:
     bool m_break;
-    std::shared_ptr<std::thread> m_thread;
+    bool m_running;
 
-    std::string m_fileWeight;
-    std::string m_fileTokenizer;
-    std::string m_model_type;
-    gcpp::Model model_type;
-    enum gcpp::ModelTraining model_training;
-
+    std::string m_config_file;
     gcpp::RuntimeConfig m_config;
 
+    std::shared_ptr<std::thread> m_thread;
     std::shared_ptr<gcpp::Gemma> m_model;
     std::shared_ptr<hwy::ThreadPool> m_pool;
 
-private:
-    std::string m_setting_file;
-
-    size_t m_num_threads;
-    std::string m_prompt;
-    void *m_user;
-    bool m_running;
+    std::string m_fileWeight;
+    std::string m_fileTokenizer;
+    std::string m_modelTypeName;
+    gcpp::Model m_modelType;
+    enum gcpp::ModelTraining m_modelTraining;
+    int m_port;
 
     std::queue<std::string> m_prompts;
-    std::map<std::string, std::shared_ptr<Session>> m_sessions;
-    std::string m_session;
 
     callback m_callback;
+    void *m_user;
 
-private:
+    std::condition_variable m_cv;
+    std::mutex m_mtx;
+    bool m_ready;
+
     std::shared_ptr<ix::WebSocketServer> m_server;
-    std::condition_variable cv;
-    std::mutex mtx;
-    bool ready = false;
 };
 
 #endif // GEMMATHREAD_H

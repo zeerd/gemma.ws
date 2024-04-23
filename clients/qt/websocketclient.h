@@ -13,6 +13,8 @@ public:
     explicit WebSocketClient(QObject *parent = nullptr);
     virtual ~WebSocketClient();
 
+    QString session() { return m_session_name; }
+    void setSession(QString session) { m_session_name = session; }
     void sendMessage(QString message);
     void sendStop();
     bool isValid() { return m_webSocket.isValid(); }
@@ -30,8 +32,7 @@ private:
     MainWindow *m_mainWindow;
     QWebSocket m_webSocket;
     std::shared_ptr<QTimer> m_timer;
-
-    std::string m_ID;
+    QString m_session_name;
 };
 
 #endif /* WEBSOCKETCLIENT_H */

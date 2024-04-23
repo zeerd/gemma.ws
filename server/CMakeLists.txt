@@ -11,14 +11,11 @@ ADD_LIBRARY(GemmaCore STATIC
 
 TARGET_LINK_LIBRARIES(
    GemmaCore
-    -pthread
-   -L${PROJECT_SOURCE_DIR}/3rdparty/gemma.cpp/build/
-   -L${PROJECT_SOURCE_DIR}/3rdparty/gemma.cpp/build/_deps/highway-build
-   -lgemma -lhwy -lhwy_contrib
-   -L${PROJECT_SOURCE_DIR}/3rdparty/gemma.cpp/build/_deps/sentencepiece-build/src/
-    -lsentencepiece
-   -L${PROJECT_SOURCE_DIR}/build/3rdparty/IXWebSocket/
-    -lixwebsocket -lz
+    pthread
+    libgemma
+    hwy hwy_contrib
+    sentencepiece
+    ixwebsocket
 )
 
 ################################################################################

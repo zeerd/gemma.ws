@@ -1,9 +1,11 @@
 moc_*
 *.o
 ui_*.h
+*.ui_parameters
 qrc_gemma.cpp
 .qmake.stash
 Makefile
 gemma
+Gemma.QT
 2b-it.sbs
 tokenizer.spm

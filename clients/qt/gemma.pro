@@ -45,17 +45,17 @@ QMAKE_LFLAGS   += "-fsanitize=address"
 INCLUDEPATH += dialogs/
 
 INCLUDEPATH += ../../server/
-INCLUDEPATH += ../../3rdparty/gemma.cpp/build/_deps/highway-src
-INCLUDEPATH += ../../3rdparty/gemma.cpp/build/_deps/sentencepiece-src/
+INCLUDEPATH += ../../build/_deps/highway-src
+INCLUDEPATH += ../../build/_deps/sentencepiece-src/
 INCLUDEPATH += ../../3rdparty/gemma.cpp/
 INCLUDEPATH += ../../3rdparty/json/include
 INCLUDEPATH += ../../3rdparty/IXWebSocket
 
 LIBS += ../../build/server/libGemmaCore.a
-LIBS += ../../3rdparty/gemma.cpp/build/libgemma.a
-LIBS += ../../3rdparty/gemma.cpp/build/_deps/highway-build/libhwy.a
-LIBS += ../../3rdparty/gemma.cpp/build/_deps/highway-build/libhwy_contrib.a
-LIBS += ../../3rdparty/gemma.cpp/build/_deps/sentencepiece-build/src/libsentencepiece.a
+LIBS += ../../build/3rdparty/gemma.cpp//libgemma.a
+LIBS += ../../build/_deps/highway-build/libhwy.a
+LIBS += ../../build/_deps/highway-build/libhwy_contrib.a
+LIBS += ../../build/_deps/sentencepiece-build/src/libsentencepiece.a
 LIBS += ../../build/3rdparty/IXWebSocket/libixwebsocket.a -lz
 
 FORMS += \
@@ -69,8 +69,10 @@ DISTFILES += \
     resources/3rdparty/MARKED-LICENSE.txt
 
 defineReplace(GetCommitID) {
-    COMMITID=$$system(git -c 3rdparty.fileMode=false describe --always --dirty)
+    COMMITID=$$system(git -c core.fileMode=false describe --always --dirty)
     return ($$COMMITID)
 }
 COMMIT_NAME = $$GetCommitID()
 DEFINES += COMMIT_NAME=\\\"$$COMMIT_NAME\\\"
+
+TARGET = Gemma.QT

@@ -8,7 +8,6 @@ using json = nlohmann::json;
 WebSocketClient::WebSocketClient(QObject *parent)
     : QObject(parent)
     , m_mainWindow((MainWindow*)parent)
-    , m_ID("")
 {
     logger(logger::TI).os << __FUNCTION__;
     connect(&m_webSocket, &QWebSocket::connected, this, &WebSocketClient::onConnected);
@@ -52,17 +51,22 @@ void WebSocketClient::sendMessage(QString message)
 {
     qDebug() << "Send " << message;
     json data;
-    data["id"] = m_ID;
+    data["id"] = m_session_name.toStdString();
     data["messages"]["role"] = "user";
     data["messages"]["content"] = message.toStdString();
     m_webSocket.sendTextMessage(data.dump().c_str());
+
+    QString markdown_prompt = ("\n\n**Question:**\n\n```\n");
+    markdown_prompt += message;
+    markdown_prompt += "\n```\n\n**Answer:**\n\n";
+    m_mainWindow->m_content.appendText(markdown_prompt);
 }
 
 void WebSocketClient::sendStop()
 {
     qDebug() << "sendStop";
     json data;
-    data["id"] = m_ID;
+    data["id"] = m_session_name.toStdString();
     data["stop"] = "stop"; // FIXME: I'd not understood the value
     m_webSocket.sendTextMessage(data.dump().c_str());
 }
@@ -71,7 +75,7 @@ void WebSocketClient::onTextMessageReceived(QString message)
 {
     qDebug() << "Received " << message;
     json data = json::parse(message.toStdString());
-    m_ID = data["id"];
+    // session = data["id"].c_str();
     std::string token = data["choices"]["messages"]["content"];
     int progress = data["usage"]["completion_tokens"];
     int max = data["usage"]["total_tokens"];

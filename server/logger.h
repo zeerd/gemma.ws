@@ -9,22 +9,23 @@ using LogFunc = std::function<void(const char*)>;
 
 class logger {
 public:
-    static const int E = 1;
-    static const int W = 2;
-    static const int I = 3;
-    static const int D = 4;
-    static const int V = 5;
-    static const int TI = 6;
-    static const int TO = 7;
+    static const int TI = 1;
+    static const int TO = 2;
+    static const int E = 3;
+    static const int W = 4;
+    static const int I = 5;
+    static const int D = 6;
+    static const int V = 7;
 public:
     logger(int f = I) : flag(f) {}
     ~logger() {
-        if(trace_off && flag >= level) {
+        if(trace_off && flag <= TO) {
         }
-        else if(flag > level) {
+        else if(flag > threshold) {
         }
         else {
             std::stringstream ss;
+            ss << "[" << n[flag] << "]";
             ss << os.str();
             if(flag == TI) { ss << " IN\n"; }
             if(flag == TO) { ss << " OUT\n"; }
@@ -36,8 +37,11 @@ public:
         }
     }
 private:
-    static const bool trace_off = true;
-    static const bool level = I;
+    static bool trace_off;
+    static int threshold;
+    const char* n[8] = {
+        "", "Trace", "Trace", "Err", "War", "Inf", "dbg", "vbs"
+    };
 public:
     std::ostringstream os;
     static LogFunc func;
