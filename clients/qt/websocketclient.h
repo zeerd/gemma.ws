@@ -16,6 +16,7 @@ public:
     QString session() { return m_session_name; }
     void setSession(QString session) { m_session_name = session; }
     void sendMessage(QString message);
+    void sendBinaryFile(QString filePath);
     void sendStop();
     bool isValid() { return m_webSocket.isValid(); }
 

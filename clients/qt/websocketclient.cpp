@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "websocketclient.h"
 #include "logger.h"
+#include <QFileInfo>
 
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
@@ -62,6 +63,33 @@ void WebSocketClient::sendMessage(QString message)
     m_mainWindow->m_content.appendText(markdown_prompt);
 }
 
+void WebSocketClient::sendBinaryFile(QString filePath)
+{
+    qDebug() << "Send " << filePath;
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "Failed to open file";
+        return;
+    }
+    QFileInfo fileInfo(file.fileName());
+    QByteArray bin = file.readAll();
+    json data;
+    data["id"] = m_session_name.toStdString();
+    data["messages"]["role"] = "user";
+    data["messages"]["content"] = "Describe the image briefly";
+    data["uploads"]["purpose"] = "paligemma";
+    data["uploads"]["filename"] = fileInfo.baseName().toStdString();
+    data["uploads"]["binary"] = std::vector<uint8_t>(bin.begin(), bin.end());
+    m_webSocket.sendTextMessage(data.dump().c_str());
+
+    QString markdown_prompt = ("\n\n**Question:**\n\n```\n");
+    markdown_prompt += data["messages"]["content"].get<std::string>().c_str();
+    markdown_prompt += " : ";
+    markdown_prompt += filePath;
+    markdown_prompt += "\n```\n\n**Answer:**\n\n";
+    m_mainWindow->m_content.appendText(markdown_prompt);
+}
+
 void WebSocketClient::sendStop()
 {
     qDebug() << "sendStop";
@@ -84,7 +112,7 @@ void WebSocketClient::onTextMessageReceived(QString message)
                                 "setValue", Q_ARG(int, progress));
     QMetaObject::invokeMethod(m_mainWindow->ui->progress,
                                 "setRange", Q_ARG(int, 0), Q_ARG(int, max));
-    if("<|file_separator|>" == token) {
+    if("<|file_separator|>" == token || (token=="" && max == 0)) {
         QMetaObject::invokeMethod(m_mainWindow, "on_doGemmaFinished");
     }
     else {

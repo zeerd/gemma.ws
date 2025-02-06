@@ -35,12 +35,19 @@ Setting::Setting(QWidget *parent)
     }
     ui->edit_ctags->setText(ctags);
 
+    ui->comboModelType->addItem("gemma2-2b-it");
+    ui->comboModelType->addItem("gemma2-2b-pt");
+    ui->comboModelType->addItem("paligemma-224");
+    ui->comboModelType->addItem("9b-it");
+    ui->comboModelType->addItem("9b-pt");
+    ui->comboModelType->addItem("27b-it");
+    ui->comboModelType->addItem("27b-pt");
     ui->comboModelType->addItem("2b-it");
     ui->comboModelType->addItem("7b-it");
     ui->comboModelType->addItem("2b-pt");
     ui->comboModelType->addItem("7b-pt");
 
-    int index = ui->comboModelType->findText(settings.value("ModelType", "2b-it").toString());
+    int index = ui->comboModelType->findText(settings.value("ModelType", "gemma2-2b-it").toString());
     if (index != -1) {
         ui->comboModelType->setCurrentIndex(index);
     }
@@ -103,7 +110,7 @@ void Setting::on_load_Weights_clicked()
 void Setting::on_load_Tokenizer_clicked()
 {
     QString path = QFileDialog::getOpenFileName(this,
-        tr("Open Tokenizer File"), "", tr("Tokenizer File (*.spm)"));
+        tr("Open Tokenizer File"), "", tr("Tokenizer File (*.spm *.model)"));
     if (m_mainWindow->loadFile(path)) {
         ui->edit_Tokenizer->setText(path);
         m_mainWindow->m_content.appendText("\n**Tokenizer file**\n- " + path + " loaded.\n");

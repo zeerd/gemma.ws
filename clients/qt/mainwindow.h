@@ -28,7 +28,7 @@ public:
     ~MainWindow();
 
     bool loadFile(const QString &path);
-    void prepare();
+    void prepare(bool max = false);
 
 private slots:
     void onSetting();
@@ -41,6 +41,7 @@ private slots:
     void on_doGemma(QString text);
     void on_doGemmaFinished();
 
+    void on_image_clicked();
     void on_send_clicked();
     void on_reset_clicked();
     void on_newSession_clicked();
@@ -59,6 +60,7 @@ public:
     int m_timer_ms;
 
     int m_port;
+    bool m_PaliGemma;
 
 private:
     QWebChannel *m_channel;

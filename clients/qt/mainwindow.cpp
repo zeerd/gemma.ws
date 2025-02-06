@@ -52,6 +52,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     m_gemma = std::make_shared<GemmaThread>(readConfig().toStdString());
 
+    ui->image->setVisible(m_PaliGemma);
+
     m_content.setText("");
     m_channel = new QWebChannel(this);
     m_channel->registerObject(QStringLiteral("content"), &m_content);
@@ -82,7 +84,14 @@ MainWindow::MainWindow(QWidget *parent)
         "- Compute the nth fibonacci number in javascript.\n"
         "- Write a standup comedy bit about GPU programming.\n"
         "\n\n---\n";
-    m_content.appendText(instructions);
+    const char *pali_instructions = "\n"
+        "**Usage**\n\n"
+        "- Load a picture.\n\n"
+        "**Examples**\n\n"
+        "- What type of building is it?\n"
+        "- caption image\n"
+        "\n\n---\n";
+    m_content.appendText(m_PaliGemma ? pali_instructions : instructions);
 }
 
 MainWindow::~MainWindow()
@@ -103,6 +112,8 @@ QString MainWindow::readConfig()
     m_timer_ms = settings.value("timer", 10000).toInt();
 
     m_port = settings.value("WebSocketPort").toInt();
+
+    m_PaliGemma = settings.value("ModelType").toString().contains("paligemma");
     settings.endGroup();
 
     return settings.fileName();
@@ -248,22 +259,44 @@ void MainWindow::on_doGemmaFinished()
     m_processing = false;
     m_content.appendText("\n\n---\n");
     ui->progress->setValue(0);
+    ui->progress->setRange(0, 1);
     ui->send->setText(QCoreApplication::translate("MainWindow", "Send", nullptr));
 }
 
-void MainWindow::prepare()
+void MainWindow::prepare(bool max)
 {
     QString stop = QCoreApplication::translate("MainWindow", "Stop", nullptr);
     int propertyIndex = ui->send->metaObject()->indexOfProperty("text");
     QMetaProperty property = ui->send->metaObject()->property(propertyIndex);
     property.write(ui->send, stop);
 
-    QMetaObject::invokeMethod(ui->progress, "setValue", Q_ARG(int, 1));
+    if(max) {
+        QMetaObject::invokeMethod(ui->progress, "setValue", Q_ARG(int, 0));
+        QMetaObject::invokeMethod(ui->progress, "setRange", Q_ARG(int, 0), Q_ARG(int, 0));
+    }
+    else {
+        QMetaObject::invokeMethod(ui->progress, "setValue", Q_ARG(int, 1));
+    }
 
     if(m_ws->session() == "") {
         on_newSession_clicked();
     }
     m_processing = true;
+}
+
+void MainWindow::on_image_clicked()
+{
+    if(m_ws->isValid()) {
+        QString path = QFileDialog::getOpenFileName(this,
+            tr("Open Image File"), "", tr("Image File (*.*)"));
+        if (loadFile(path)) {
+            prepare(true);
+            m_ws->sendBinaryFile(path);
+        }
+    }
+    else {
+        QMessageBox::warning(this, windowTitle(), "Gemma Server Lost.");
+    }
 }
 
 void MainWindow::on_send_clicked()

@@ -13,7 +13,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}/build/_deps/highway-src
     ${PROJECT_SOURCE_DIR}/build/_deps/sentencepiece-src/
     ${PROJECT_SOURCE_DIR}/3rdparty/gemma.cpp
-    ${PROJECT_SOURCE_DIR}/3rdparty/gemma.cpp/
+    ${PROJECT_SOURCE_DIR}/3rdparty/gemma.cpp/gemma
     ${PROJECT_SOURCE_DIR}/3rdparty/json/include
     ${PROJECT_SOURCE_DIR}/3rdparty/IXWebSocket
 )

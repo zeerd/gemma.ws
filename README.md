@@ -1,7 +1,7 @@
 # Gemma.WS
 
 The core of this repo is [ServerGemma](./server/README.md).
-It's a Gemma server basic on
+It's a Gemma server based on
 [WebSocket](https://github.com/machinezone/IXWebSocket),
 [json](https://github.com/nlohmann/json.git)
 and [GemmaC++](https://github.com/google/gemma.cpp).
