@@ -1,5 +1,7 @@
 # Gemma.WS
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zeerd/gemma.ws)
+
 The core of this repo is [ServerGemma](./server/README.md).
 It's a Gemma server based on
 [WebSocket](https://github.com/machinezone/IXWebSocket),
